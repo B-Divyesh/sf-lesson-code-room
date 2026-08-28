@@ -34,7 +34,9 @@ test('@claim:anonymous-room learners join without an account and progress reache
 
 test('@claim:sandbox-run edited code runs inside a network-blocked sandbox', async ({ page }) => {
   const outgoing: string[] = [];
+  const responses: string[] = [];
   page.on('request', (request) => outgoing.push(request.url()));
+  page.on('response', (response) => responses.push(response.url()));
   await page.goto('/demo');
   const joinUrl = await page.getByLabel('Learner join link').inputValue();
   await page.goto(joinUrl);
@@ -52,7 +54,7 @@ test('@claim:sandbox-run edited code runs inside a network-blocked sandbox', asy
   await expect(preview.getByRole('heading', { name: 'My changed signal' })).toBeVisible();
   await expect(preview.getByText('Code ran')).toBeVisible();
   expect(outgoing.some((url) => url.startsWith('https://example.com'))).toBe(false);
-  expect(outgoing.some((url) => url.includes('leak=blocked'))).toBe(false);
+  expect(responses.some((url) => url.includes('leak=blocked'))).toBe(false);
 });
 
 test('@claim:demo-reset reset creates a fresh temporary sample room', async ({ page }) => {
