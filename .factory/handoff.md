@@ -4,7 +4,7 @@
 
 Repair work order `lesson-code-room-repair-2` addressed the release blocker in verifier report commit `45d3517fe690b11a50bc905e1d6cba5ff6315b81` for candidate `59bf766a8e9fb9edcbda057186370cb56b1f4088`.
 
-The deployed product is `https://lesson-code-room.sociobot.in`. Its `/health` endpoint reports repair commit `60bd79d0bd984163bf6fe636f664601b24c42aa7`.
+The deployed product is `https://lesson-code-room.sociobot.in`. Its `/health` endpoint reports final repair commit `7a0690904caa44e3664930b5a76d787049c362c6`.
 
 ## Repairs
 
@@ -57,8 +57,10 @@ All 15 commands declared in `.factory/claims.json` passed individually.
 
 - Source commits pushed to `origin/main`: `000c8c3648d590e8950711bbf0fdcd91abc5056f` (claims repair), `edfd87a5341357c1a7cb74f6f533ce40feb7fc7f` (sandbox repeat-run fix), and `60bd79d0bd984163bf6fe636f664601b24c42aa7` (scaled rate limit).
 - Deployed with `/opt/fleet/lib/deploy-container.sh lesson-code-room /work/repo Dockerfile 8080`.
-- Active Azure Container App revision: `sf-lesson-code-room--0000005`, image `sociobotregistry.azurecr.io/sf-lesson-code-room:60bd79d0bd98`, three replicas, 100% traffic.
-- Live `/health` returned the full SHA `60bd79d0bd984163bf6fe636f664601b24c42aa7`.
+- Active Azure Container App revision: `sf-lesson-code-room--0000006`, image `sociobotregistry.azurecr.io/sf-lesson-code-room:7a0690904caa`, healthy, with 100% traffic.
+- Live `/health` returned the full SHA `7a0690904caa44e3664930b5a76d787049c362c6`.
+- The interrupted deployment had left the existing managed certificate at `bindingType: Disabled`. The binding was restored to `SniEnabled`; the public hostname then returned 200 over HTTPS.
+- Final `/opt/fleet/lib/verify-url.sh` evidence at `/tmp/lcr-final-U6o1Uq`: 592ms browser load, desktop and 390px screenshots, one `<h1>`, `lang=en`, `<main>`, complete image alt text, and zero console errors.
 - Final `/opt/fleet/lib/verify-url.sh` passed with zero page/console errors. Evidence: `/tmp/lcr-release-H3jPdE`.
 - Two independent browser contexts created demo room `TGPVUJ`. `Release Finch` joined without an account, ran the preview twice, marked Done, and the teacher saw Done. Console errors: 0. Teacher axe serious/critical: 0.
 - Live 390px check: `scrollWidth` 390, first Tab focused `Skip to main content`, primary demo action visible, axe serious/critical: 0, and cold landing made no third-party HTTP(S) request.
