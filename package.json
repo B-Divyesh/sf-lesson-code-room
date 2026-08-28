@@ -1,0 +1,23 @@
+{
+  "name": "lesson-code-room",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config frontend/vite.config.ts",
+    "build": "vite build --config frontend/vite.config.ts",
+    "test": "npm run build && cargo test && playwright test",
+    "test:browser": "playwright test",
+    "start": "cargo run"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "5.2.8",
+    "@fontsource/atkinson-hyperlegible": "5.2.8"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.58.2",
+    "typescript": "5.9.3",
+    "vite": "7.1.3"
+  }
+}

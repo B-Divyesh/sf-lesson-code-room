@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lesson-code-room.sociobot.in/sitemap.xml
