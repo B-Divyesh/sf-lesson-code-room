@@ -195,6 +195,21 @@ test('@claim:offline-preview a loaded workbench edits and previews while offline
   await context.setOffline(false);
 });
 
+test('learner preview runs repeatedly without console errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Repeat Wren');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await page.getByRole('button', { name: 'Run the page' }).click();
+  await page.getByRole('button', { name: 'Run the page' }).click();
+  await expect(page.getByText('Teacher can see: Ran code')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test('@claim:free-capacity demo API reports the free 10 learner limit', async ({ request }) => {
   const before = Math.floor(Date.now() / 1000);
   const response = await request.post('/api/demo', { data: {} });
