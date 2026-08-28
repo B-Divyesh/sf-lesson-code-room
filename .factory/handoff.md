@@ -40,13 +40,24 @@ Evidence files: `/tmp/lcr-repair-browser/verify.json`, desktop/mobile landing sc
 
 ## Deployment and live verification
 
-The final committed `main` revision is pushed to `origin` and deployed with:
+Repair candidate `64b7e765e936ed2cf398e96ddd7f6e60800bfacb` was pushed to `origin/main` and deployed with:
 
 ```sh
 /opt/fleet/lib/deploy-container.sh lesson-code-room /work/repo Dockerfile 8080
 ```
 
-The factory ACR build supplies the exact source commit through `BUILD_SHA`, starts the image as a non-root user with only `PORT`, and verifies HTTPS at `https://lesson-code-room.sociobot.in`. Final acceptance checks compare live `/health` with `git rev-parse HEAD`, repeat the learner reset flow from `/demo`, inspect the live hashed asset policy, response headers, 390px layout, keyboard focus, axe results, console, privacy requests, and a 100-request shared-room smoke.
+Exact deployment evidence:
+
+- Azure Container Registry run `chhc` succeeded. It built `sociobotregistry.azurecr.io/sf-lesson-code-room:64b7e765e936` from the multi-stage Dockerfile.
+- Azure Container App revision `sf-lesson-code-room--0000008` became healthy with 100% traffic. Live `/health` returned `{"build_sha":"64b7e765e936ed2cf398e96ddd7f6e60800bfacb","ok":true}`.
+- The live verifier passed in 609 ms with no console errors. Evidence: `/tmp/lcr-repair-live`.
+- Two browser contexts used live demo room `REQSME`. At 390px, `Repair Finch` changed and ran all three files, focused **Reset starter code**, activated it with Enter, accepted the warning, and recovered all fields plus the working starter preview. The teacher then saw `Repair Finch — Done`.
+- The live learner viewport was exactly 390px wide with no overflow; Reset measured 178.8×48px. Landing and workbench axe scans found no serious or critical issues, and teacher/learner consoles were empty.
+- The complete live flow made no cross-origin HTTP(S) page requests.
+- Live main and sandbox policies matched the local checks. Unknown paths returned 404, hostile-origin preflight returned 405 without CORS access, and `/assets/index-DwTNYr1c.js` returned `public, max-age=31536000, immutable`.
+- A 48-request live burst returned 13×200 and 35×429; every 429 included `Retry-After: 1`. A separate 100-request shared-room smoke returned 100×200 in 115 ms.
+
+The final handoff-only successor commit is deployed through the same command. Before completion, live `/health` is required to equal the final `git rev-parse HEAD`; the browser reset smoke and public response checks are repeated after that rollout.
 
 ## Known gaps
 
