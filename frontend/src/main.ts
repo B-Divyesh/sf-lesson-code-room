@@ -587,6 +587,7 @@ function legalPage(kind: 'privacy' | 'terms'): void {
       <h2>When rooms expire</h2><p><span data-claim="room-retention">Live rooms expire after 24 hours.</span> <span data-claim="demo-retention">Demo rooms expire after two hours.</span></p>
       <h2>Payments</h2><p data-claim="paid-checkout">Sociobot hosts the Room Plus checkout. This site stores the license token and its latest verification result in your browser.</p>
       <h2>What pages do not load</h2><p><span data-claim="no-tracking">Lesson Code Room pages load no advertising trackers.</span> <span data-claim="product-scope">Camera and microphone access are blocked.</span></p>
+      <h2>Service safety</h2><p data-claim="rate-limit">API request bursts are limited. A limited request says when to retry.</p>
       <h2>Questions</h2><p>Email <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with a room code if you need help.</p>
     </main>`);
   } else {

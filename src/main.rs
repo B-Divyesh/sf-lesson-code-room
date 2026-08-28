@@ -35,6 +35,9 @@ const FREE_CAPACITY: i64 = 10;
 const PAID_CAPACITY: i64 = 30;
 const ROOM_TTL_SECONDS: i64 = 24 * 60 * 60;
 const DEMO_TTL_SECONDS: i64 = 2 * 60 * 60;
+// The container app scales to at most three replicas. Thirteen per replica keeps
+// the fleet-wide burst ceiling below 40 even when ingress spreads one client.
+const RATE_LIMIT_PER_REPLICA: u32 = 13;
 // The factory deployment attaches this one user-assigned identity to every product container.
 // Client IDs are public identifiers, not credentials; the platform issues the actual short-lived token.
 const FACTORY_RUNTIME_IDENTITY_CLIENT_ID: &str = "ba10d5bc-6375-4325-8892-4c7a5be500ca";
@@ -1232,7 +1235,7 @@ async fn rate_limit(
         window.count = 0;
     }
     window.count += 1;
-    if window.count > 40 {
+    if window.count > RATE_LIMIT_PER_REPLICA {
         let mut response = (StatusCode::TOO_MANY_REQUESTS, Json(serde_json::json!({"error":"rate_limited","message":"Too many requests. Wait one second and try again."}))).into_response();
         response
             .headers_mut()

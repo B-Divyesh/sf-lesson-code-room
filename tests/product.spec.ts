@@ -295,11 +295,12 @@ test('landing, demo, and legal pages have no serious accessibility findings', as
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
 });
 
-test('all API routes return Retry-After when one client exceeds the limit', async ({ request }) => {
+test('@claim:rate-limit API bursts are limited with retry guidance', async ({ request }) => {
   const responses = await Promise.all(Array.from({ length: 48 }, () => request.post('/api/demo', { data: {}, headers: { 'X-Forwarded-For': '198.51.100.22' } })));
-  const limited = responses.find((response) => response.status() === 429);
-  expect(limited).toBeTruthy();
-  expect(limited?.headers()['retry-after']).toBe('1');
+  expect(responses.filter((response) => response.status() === 200)).toHaveLength(13);
+  const limited = responses.filter((response) => response.status() === 429);
+  expect(limited).toHaveLength(35);
+  expect(limited.every((response) => response.headers()['retry-after'] === '1')).toBe(true);
 });
 
 test('container defaults to the shared durable store instead of replica-local SQLite', async () => {

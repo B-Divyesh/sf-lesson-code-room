@@ -70,7 +70,7 @@ The image runs as a non-root user, listens on `PORT` (default `8080`), and serve
 
 Room creation stores starter code, a random teacher token, and an expiry. Joining stores a chosen screen name and progress state. Learner edits are not sent in progress updates. Product pages load no advertising trackers. The preview iframe has no same-origin permission, and its CSP blocks network, forms, media, fonts, and base URL changes.
 
-All API routes except `/health` use a per-IP fixed-window limit and honor the first valid `X-Forwarded-For` address. The default limit is 40 requests per second and returns `429` with `Retry-After: 1`.
+All API routes except `/health` limit bursts by the first valid `X-Forwarded-For` address. Limited requests return `429` with `Retry-After: 1`.
 
 See `/privacy` and `/terms` in the app for the user-facing policies.
 

@@ -70,6 +70,13 @@
     "sandbox": "fresh /demo learner; warm the preview, take the browser offline, edit HTML, run, and assert the changed preview"
   },
   {
+    "id": "rate-limit",
+    "claim": "API request bursts are limited and each 429 response says to retry after one second.",
+    "where": "/privacy and README",
+    "test": "npm test -- --grep @claim:rate-limit",
+    "sandbox": "fresh client identity; send 48 simultaneous demo requests and assert limited responses include Retry-After: 1"
+  },
+  {
     "id": "free-capacity",
     "claim": "Free rooms allow 10 learners.",
     "where": "landing facts and paid section",
