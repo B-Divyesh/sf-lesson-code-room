@@ -479,7 +479,7 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
         <button class="button button-quiet" id="reset-code" type="button">Reset starter code</button>
       </div>
     </section>
-    <div id="offline-note" class="offline-note" role="status" hidden>You are offline. Editing and preview still work. Progress will update after you reconnect.</div>
+    <div id="offline-note" class="offline-note" role="status" hidden>You are offline. Editing and preview still work. Reconnect, then run again to update progress.</div>
     <section class="workbench" aria-label="Coding workbench">
       <div class="editor-pane">
         <div class="editor-tabs" role="tablist" aria-label="Code files">
@@ -567,7 +567,7 @@ async function sendProgress(roomId: string, token: string, status: 'ran' | 'done
     await request(`/api/rooms/${roomId}/progress`, { method: 'POST', body: JSON.stringify({ learner_token: token, status }) });
     output.textContent = status === 'done' ? 'Teacher can see: Done' : 'Teacher can see: Ran code';
   } catch (caught) {
-    output.textContent = caught instanceof ApiFailure && caught.code === 'offline' ? 'Preview ran. Progress is waiting for a connection.' : caught instanceof Error ? caught.message : 'Progress did not update.';
+    output.textContent = caught instanceof ApiFailure && caught.code === 'offline' ? 'Preview ran. Reconnect, then run again to update progress.' : caught instanceof Error ? caught.message : 'Progress did not update.';
   }
 }
 
