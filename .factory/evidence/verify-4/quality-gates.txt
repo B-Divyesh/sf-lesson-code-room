@@ -1,0 +1,86 @@
+===== npm test =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 343ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.15s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 22 tests using 1 worker
+
+(node:17689) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17689) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/product.spec.ts:7:1 › landing page states the job and fits a phone (656ms)
+  ✓   2 tests/product.spec.ts:21:1 › @claim:anonymous-room learners join without an account and progress reaches the teacher (5.9s)
+  ✓   3 tests/product.spec.ts:39:1 › @claim:custom-room a teacher creates and shares custom starter code (2.6s)
+  ✓   4 tests/product.spec.ts:53:1 › @claim:sandbox-run edited code runs inside a network-blocked sandbox (1.9s)
+  ✓   5 tests/product.spec.ts:78:1 › @claim:demo-reset reset creates isolated temporary sample data (1.1s)
+  ✓   6 tests/product.spec.ts:93:1 › @claim:learner-reset restores all starter files and the rendered preview (2.3s)
+  ✓   7 tests/product.spec.ts:141:1 › @claim:privacy-code learner edits are not sent in progress updates (1.8s)
+  ✓   8 tests/product.spec.ts:165:1 › @claim:teacher-report-limits teacher reports contain progress but no grades or detailed activity (90ms)
+  ✓   9 tests/product.spec.ts:184:1 › @claim:product-scope the workbench has code tools but no repository or call controls (1.4s)
+  ✓  10 tests/product.spec.ts:198:1 › @claim:no-tracking landing and full demo flow load only product resources (2.0s)
+  ✓  11 tests/product.spec.ts:214:1 › @claim:session-storage room keys stay in one tab, not persistent browser storage (1.8s)
+  ✓  12 tests/product.spec.ts:229:1 › @claim:offline-preview a loaded workbench edits and previews while offline (2.2s)
+  ✓  13 tests/product.spec.ts:246:1 › learner preview runs repeatedly without console errors (1.7s)
+  ✓  14 tests/product.spec.ts:261:1 › @claim:free-capacity demo API reports the free 10 learner limit (43ms)
+  ✓  15 tests/product.spec.ts:269:1 › @claim:room-retention live rooms expire after 24 hours (49ms)
+  ✓  16 tests/product.spec.ts:280:1 › @claim:demo-retention demo API reports two-hour temporary storage (63ms)
+  ✓  17 tests/product.spec.ts:289:1 › @claim:paid-checkout uses the Sociobot hosted purchase and restore contract (1.3s)
+  ✓  18 tests/product.spec.ts:303:1 › every annotated visitor claim is inventoried and every inventory id is published (2.0s)
+  ✓  19 tests/product.spec.ts:326:1 › landing, demo, and legal pages have no serious accessibility findings (7.8s)
+  ✓  20 tests/product.spec.ts:346:1 › @claim:rate-limit API bursts are limited with retry guidance (1.1s)
+  ✓  21 tests/product.spec.ts:354:1 › container defaults to the shared durable store instead of replica-local SQLite (5ms)
+  ✓  22 tests/product.spec.ts:364:1 › hashed production assets use the immutable cache policy (887ms)
+
+  22 passed (41.4s)
+===== TypeScript =====
+===== cargo fmt =====
+===== cargo clippy =====
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.71s
+===== release build =====
+    Finished `release` profile [optimized] target(s) in 0.55s
+===== exact production frontend build =====
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 371ms

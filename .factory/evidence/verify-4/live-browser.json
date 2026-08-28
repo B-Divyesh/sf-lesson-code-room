@@ -1,0 +1,179 @@
+{
+  "firstRead": {
+    "httpStatus": 200,
+    "h1": "Run one coding exercise together",
+    "lead": "For remote teachers who need learners coding now, with clear progress and no student accounts.",
+    "action": "Try it with sample data",
+    "actionRect": {
+      "top": 806,
+      "bottom": 854
+    },
+    "factTexts": [
+      "No student accounts",
+      "Rooms close after 24 hours",
+      "Free for 10 learners"
+    ],
+    "factsRect": {
+      "top": 890,
+      "bottom": 975
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "h1s": 1,
+    "mains": 1,
+    "lang": "en",
+    "skip": {
+      "text": "Skip to main content",
+      "tag": "A",
+      "outline": "rgb(255, 200, 87) solid 3px",
+      "top": 8,
+      "height": 44
+    },
+    "backFocus": {
+      "tag": "H1",
+      "text": "Run one coding exercise together",
+      "tabindex": "-1"
+    }
+  },
+  "demo": {
+    "banner": "Demo — sample data, nothing is saved\nReset demo\nStart for real",
+    "seeded": [
+      1,
+      1,
+      1
+    ],
+    "joinUrl": "https://lesson-code-room.sociobot.in/room/RJKWKL",
+    "copyLabel": "Copy join link",
+    "demoBannerOnJoin": 0,
+    "demoBannerOnWorkbench": 0,
+    "beforeReset": "https://lesson-code-room.sociobot.in/room/RJKWKL",
+    "afterReset": "https://lesson-code-room.sociobot.in/room/BKCUSR",
+    "resetChangedRoom": true
+  },
+  "flow": {
+    "previewText": "Live script ran",
+    "background": "rgb(12, 34, 56)",
+    "arrowTab": {
+      "text": "CSS",
+      "selected": "true"
+    },
+    "teacherCounts": {
+      "total": "4",
+      "ran": "3",
+      "done": "2"
+    },
+    "mobileWorkbench": {
+      "width": 390,
+      "scrollWidth": 390,
+      "h1s": 1,
+      "main": true
+    },
+    "targetSizes": [
+      {
+        "text": "Run the page",
+        "width": 138.78125,
+        "height": 48
+      },
+      {
+        "text": "Marked as done",
+        "width": 159.78125,
+        "height": 48
+      },
+      {
+        "text": "Reset starter code",
+        "width": 178.78125,
+        "height": 48
+      },
+      {
+        "text": "HTML",
+        "width": 130,
+        "height": 52
+      },
+      {
+        "text": "CSS",
+        "width": 130,
+        "height": 52
+      },
+      {
+        "text": "JavaScript",
+        "width": 130,
+        "height": 52
+      }
+    ],
+    "offlineStatus": "Preview ran. Reconnect, then run again to update progress."
+  },
+  "accessibility": {
+    "desktopAxe": {
+      "/": {
+        "status": 200,
+        "title": "Lesson Code Room — Run a shared coding exercise",
+        "h1": 1,
+        "main": 1,
+        "seriousCritical": [],
+        "consoleErrors": []
+      },
+      "/demo": {
+        "status": 200,
+        "title": "Demo — Lesson Code Room",
+        "h1": 1,
+        "main": 1,
+        "seriousCritical": [],
+        "consoleErrors": []
+      },
+      "/privacy": {
+        "status": 200,
+        "title": "Privacy — Lesson Code Room",
+        "h1": 1,
+        "main": 1,
+        "seriousCritical": [],
+        "consoleErrors": []
+      },
+      "/terms": {
+        "status": 200,
+        "title": "Terms — Lesson Code Room",
+        "h1": 1,
+        "main": 1,
+        "seriousCritical": [],
+        "consoleErrors": []
+      }
+    },
+    "workbenchAxe": [],
+    "mobileLandingAxe": []
+  },
+  "mobileReducedMotion": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "scrollWidth": 390,
+    "h1": "Run one coding exercise together",
+    "lead": "For remote teachers who need learners coding now, with clear progress and no student accounts.",
+    "action": "Try it with sample data",
+    "actionRect": {
+      "top": 575,
+      "bottom": 623,
+      "width": 215,
+      "height": 48
+    },
+    "factsRect": {
+      "top": 695,
+      "bottom": 815,
+      "width": 350,
+      "height": 120
+    },
+    "buttonTransition": "1e-05s",
+    "heroAnimation": "1e-05s",
+    "errors": []
+  },
+  "privacy": {
+    "httpRequestOrigins": [
+      "https://lesson-code-room.sociobot.in"
+    ],
+    "ordinaryErrors": [],
+    "offlineErrors": [
+      "learner console: Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ]
+  }
+}

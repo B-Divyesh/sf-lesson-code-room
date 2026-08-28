@@ -1,0 +1,191 @@
+{
+  "/": [
+    {
+      "tag": "A",
+      "text": "Lesson Code Room",
+      "width": 152,
+      "height": 36.9,
+      "href": "/"
+    },
+    {
+      "tag": "A",
+      "text": "Demo",
+      "width": 38,
+      "height": 44,
+      "href": "/demo"
+    },
+    {
+      "tag": "INPUT",
+      "text": "license",
+      "width": 0,
+      "height": 0,
+      "href": null
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Verify license",
+      "width": 0,
+      "height": 0,
+      "href": null
+    },
+    {
+      "tag": "A",
+      "text": "Privacy",
+      "width": 43,
+      "height": 18,
+      "href": "/privacy"
+    },
+    {
+      "tag": "A",
+      "text": "Terms",
+      "width": 39,
+      "height": 18,
+      "href": "/terms"
+    },
+    {
+      "tag": "A",
+      "text": "Built by Param Factory (external site)",
+      "width": 140,
+      "height": 18,
+      "href": "https://hello-factory.sociobot.in"
+    }
+  ],
+  "/demo": [
+    {
+      "tag": "A",
+      "text": "Lesson Code Room",
+      "width": 152,
+      "height": 36.9,
+      "href": "/"
+    },
+    {
+      "tag": "A",
+      "text": "Demo",
+      "width": 38,
+      "height": 44,
+      "href": "/demo"
+    },
+    {
+      "tag": "BUTTON",
+      "text": "Reset demo",
+      "width": 112.8,
+      "height": 36,
+      "href": null
+    },
+    {
+      "tag": "A",
+      "text": "Start for real",
+      "width": 119.8,
+      "height": 36,
+      "href": "/#create"
+    },
+    {
+      "tag": "A",
+      "text": "Privacy",
+      "width": 43,
+      "height": 18,
+      "href": "/privacy"
+    },
+    {
+      "tag": "A",
+      "text": "Terms",
+      "width": 39,
+      "height": 18,
+      "href": "/terms"
+    },
+    {
+      "tag": "A",
+      "text": "Built by Param Factory (external site)",
+      "width": 140,
+      "height": 18,
+      "href": "https://hello-factory.sociobot.in"
+    }
+  ],
+  "/privacy": [
+    {
+      "tag": "A",
+      "text": "Lesson Code Room",
+      "width": 152,
+      "height": 36.9,
+      "href": "/"
+    },
+    {
+      "tag": "A",
+      "text": "Demo",
+      "width": 38,
+      "height": 44,
+      "href": "/demo"
+    },
+    {
+      "tag": "A",
+      "text": "privacy@sociobot.in",
+      "width": 149,
+      "height": 21,
+      "href": "mailto:privacy@sociobot.in"
+    },
+    {
+      "tag": "A",
+      "text": "Privacy",
+      "width": 43,
+      "height": 18,
+      "href": "/privacy"
+    },
+    {
+      "tag": "A",
+      "text": "Terms",
+      "width": 39,
+      "height": 18,
+      "href": "/terms"
+    },
+    {
+      "tag": "A",
+      "text": "Built by Param Factory (external site)",
+      "width": 140,
+      "height": 18,
+      "href": "https://hello-factory.sociobot.in"
+    }
+  ],
+  "/terms": [
+    {
+      "tag": "A",
+      "text": "Lesson Code Room",
+      "width": 152,
+      "height": 36.9,
+      "href": "/"
+    },
+    {
+      "tag": "A",
+      "text": "Demo",
+      "width": 38,
+      "height": 44,
+      "href": "/demo"
+    },
+    {
+      "tag": "A",
+      "text": "Privacy",
+      "width": 43,
+      "height": 18,
+      "href": "/privacy"
+    },
+    {
+      "tag": "A",
+      "text": "Terms",
+      "width": 39,
+      "height": 18,
+      "href": "/terms"
+    },
+    {
+      "tag": "A",
+      "text": "Built by Param Factory (external site)",
+      "width": 140,
+      "height": 18,
+      "href": "https://hello-factory.sociobot.in"
+    }
+  ],
+  "text200": {
+    "innerWidth": 390,
+    "scrollWidth": 450,
+    "scrollHeight": 11907,
+    "visibleInputs": 16
+  }
+}

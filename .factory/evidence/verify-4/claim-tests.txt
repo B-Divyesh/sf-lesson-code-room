@@ -1,0 +1,688 @@
+===== CLAIM anonymous-room =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:anonymous-room
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 427ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:15202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:21:1 › @claim:anonymous-room learners join without an account and progress reaches the teacher (5.9s)
+
+  1 passed (8.6s)
+===== RESULT anonymous-room exit=0 =====
+===== CLAIM custom-room =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:custom-room
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 387ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:15383) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15383) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:39:1 › @claim:custom-room a teacher creates and shares custom starter code (2.8s)
+
+  1 passed (5.5s)
+===== RESULT custom-room exit=0 =====
+===== CLAIM sandbox-run =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:sandbox-run
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 376ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:15568) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15568) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:53:1 › @claim:sandbox-run edited code runs inside a network-blocked sandbox (2.1s)
+
+  1 passed (4.8s)
+===== RESULT sandbox-run exit=0 =====
+===== CLAIM demo-reset =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:demo-reset
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 362ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:15722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:78:1 › @claim:demo-reset reset creates isolated temporary sample data (1.4s)
+
+  1 passed (4.0s)
+===== RESULT demo-reset exit=0 =====
+===== CLAIM learner-reset =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:learner-reset
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 355ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:15874) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:15874) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:93:1 › @claim:learner-reset restores all starter files and the rendered preview (2.8s)
+
+  1 passed (5.3s)
+===== RESULT learner-reset exit=0 =====
+===== CLAIM privacy-code =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:privacy-code
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 342ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.15s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:16026) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16026) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:141:1 › @claim:privacy-code learner edits are not sent in progress updates (1.9s)
+
+  1 passed (4.6s)
+===== RESULT privacy-code exit=0 =====
+===== CLAIM teacher-report-limits =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:teacher-report-limits
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 378ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:16199) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16199) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:165:1 › @claim:teacher-report-limits teacher reports contain progress but no grades or detailed activity (213ms)
+
+  1 passed (2.5s)
+===== RESULT teacher-report-limits exit=0 =====
+===== CLAIM product-scope =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:product-scope
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 354ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:16290) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16290) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:184:1 › @claim:product-scope the workbench has code tools but no repository or call controls (1.6s)
+
+  1 passed (4.2s)
+===== RESULT product-scope exit=0 =====
+===== CLAIM no-tracking =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:no-tracking
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 374ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:16447) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16447) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:198:1 › @claim:no-tracking landing and full demo flow load only product resources (2.2s)
+
+  1 passed (4.7s)
+===== RESULT no-tracking exit=0 =====
+===== CLAIM session-storage =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:session-storage
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 354ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:16601) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16601) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:214:1 › @claim:session-storage room keys stay in one tab, not persistent browser storage (2.1s)
+
+  1 passed (4.7s)
+===== RESULT session-storage exit=0 =====
+===== CLAIM offline-preview =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:offline-preview
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 367ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:16784) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16784) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:229:1 › @claim:offline-preview a loaded workbench edits and previews while offline (2.3s)
+
+  1 passed (4.8s)
+===== RESULT offline-preview exit=0 =====
+===== CLAIM rate-limit =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:rate-limit
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 459ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:16936) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16936) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:346:1 › @claim:rate-limit API bursts are limited with retry guidance (1.2s)
+
+  1 passed (3.6s)
+===== RESULT rate-limit exit=0 =====
+===== CLAIM free-capacity =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:free-capacity
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 390ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:17034) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17034) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:261:1 › @claim:free-capacity demo API reports the free 10 learner limit (214ms)
+
+  1 passed (2.6s)
+===== RESULT free-capacity exit=0 =====
+===== CLAIM room-retention =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:room-retention
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 336ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:17125) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17125) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:269:1 › @claim:room-retention live rooms expire after 24 hours (141ms)
+
+  1 passed (2.5s)
+===== RESULT room-retention exit=0 =====
+===== CLAIM demo-retention =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:demo-retention
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 346ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:17217) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17217) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:280:1 › @claim:demo-retention demo API reports two-hour temporary storage (227ms)
+
+  1 passed (2.5s)
+===== RESULT demo-retention exit=0 =====
+===== CLAIM paid-checkout =====
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test --grep @claim:paid-checkout
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-BLQjfvdB.css                                     17.50 kB │ gzip: 4.71 kB
+../dist/assets/index-DwTNYr1c.js                                      27.65 kB │ gzip: 8.95 kB │ map: 51.37 kB
+✓ built in 360ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 2 tests
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 1 test using 1 worker
+
+(node:17309) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17309) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/product.spec.ts:289:1 › @claim:paid-checkout uses the Sociobot hosted purchase and restore contract (1.6s)
+
+  1 passed (4.1s)
+===== RESULT paid-checkout exit=0 =====

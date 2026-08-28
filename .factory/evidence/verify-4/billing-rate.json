@@ -1,0 +1,10 @@
+{
+  "requests": 80,
+  "statusCounts": {
+    "200": 30,
+    "429": 50
+  },
+  "retryAfter": [
+    "4"
+  ]
+}

@@ -1,0 +1,24 @@
+===== health =====
+{"build_sha":"dev","ok":true}===== startup log =====
+{"timestamp":"2026-08-28T17:42:16.631646Z","level":"INFO","fields":{"message":"lesson-code-room started","port":4188,"build_sha":"dev","storage_config":"local SQLite fallback (no managed identity)"},"target":"lesson_code_room"}
+===== generated files =====
+./.health.json 29 bytes
+./.runtime.log 228 bytes
+./data/lesson-code-room.db 40960 bytes
+./dist/apple-touch-icon.png 5058 bytes
+./dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2 17208 bytes
+./dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2 17524 bytes
+./dist/assets/classroom-hero-900.webp 22320 bytes
+./dist/assets/classroom-hero.webp 55336 bytes
+./dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2 36620 bytes
+./dist/assets/index-BLQjfvdB.css 17497 bytes
+./dist/assets/index-DwTNYr1c.js 27654 bytes
+./dist/assets/index-DwTNYr1c.js.map 51368 bytes
+./dist/assets/social-card.webp 31104 bytes
+./dist/favicon.svg 422 bytes
+./dist/index.html 1691 bytes
+./dist/robots.txt 82 bytes
+./dist/sandbox-runner.js 1326 bytes
+./dist/sandbox.html 268 bytes
+./dist/sitemap.xml 374 bytes
+./dist/staticwebapp.config.json 1093 bytes

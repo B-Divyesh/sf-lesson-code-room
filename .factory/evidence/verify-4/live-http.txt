@@ -1,0 +1,73 @@
+===== identity =====
+candidate=8100b1e95bf2c3cb929832e74878f8fdd5fa3069
+live_health={"build_sha":"8100b1e95bf2c3cb929832e74878f8fdd5fa3069","ok":true}
+===== local assets =====
+assets/index-DwTNYr1c.js
+assets/index-BLQjfvdB.css
+1e4de82fa7a90d1524963e37399320f97caee4b614f6d81fdb31a82758963233  dist/assets/index-DwTNYr1c.js
+0ec8650f0c4b8060f6f57ad1c9925cd2698a387393d7ceab96f4b4f46f258a7e  dist/assets/index-BLQjfvdB.css
+===== live assets =====
+assets/index-DwTNYr1c.js
+assets/index-BLQjfvdB.css
+1e4de82fa7a90d1524963e37399320f97caee4b614f6d81fdb31a82758963233  -
+0ec8650f0c4b8060f6f57ad1c9925cd2698a387393d7ceab96f4b4f46f258a7e  -
+===== route status =====
+/                        200
+/demo                    200
+/privacy                 200
+/terms                   200
+/robots.txt              200
+/sitemap.xml             200
+/sandbox.html            200
+/does-not-exist-qa       404
+===== main headers =====
+HTTP/2 200
+content-type: text/html
+accept-ranges: bytes
+last-modified: Fri, 28 Aug 2026 16:42:19 GMT
+content-length: 1691
+x-content-type-options: nosniff
+referrer-policy: strict-origin-when-cross-origin
+x-frame-options: DENY
+permissions-policy: camera=(), microphone=(), geolocation=()
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.sociobot.in; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in; frame-ancestors 'none'
+date: Fri, 28 Aug 2026 17:37:03 GMT
+
+===== sandbox headers =====
+HTTP/2 200
+content-type: text/html
+accept-ranges: bytes
+last-modified: Fri, 28 Aug 2026 16:42:19 GMT
+content-length: 268
+x-content-type-options: nosniff
+referrer-policy: strict-origin-when-cross-origin
+x-frame-options: SAMEORIGIN
+permissions-policy: camera=(), microphone=(), geolocation=()
+content-security-policy: default-src 'none'; script-src 'self' blob:; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; media-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'self'
+date: Fri, 28 Aug 2026 17:37:03 GMT
+
+===== hashed asset headers =====
+HTTP/2 200
+content-type: text/javascript
+accept-ranges: bytes
+last-modified: Fri, 28 Aug 2026 16:42:19 GMT
+content-length: 27654
+x-content-type-options: nosniff
+referrer-policy: strict-origin-when-cross-origin
+x-frame-options: DENY
+permissions-policy: camera=(), microphone=(), geolocation=()
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.sociobot.in; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in; frame-ancestors 'none'
+cache-control: public, max-age=31536000, immutable
+date: Fri, 28 Aug 2026 17:37:03 GMT
+
+===== hostile origin preflight =====
+HTTP/2 405
+x-content-type-options: nosniff
+referrer-policy: strict-origin-when-cross-origin
+x-frame-options: DENY
+permissions-policy: camera=(), microphone=(), geolocation=()
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.sociobot.in; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in; frame-ancestors 'none'
+allow: POST
+content-length: 0
+date: Fri, 28 Aug 2026 17:37:03 GMT
+

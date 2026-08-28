@@ -1,0 +1,20 @@
+===== checkout response =====
+HTTP/2 404
+content-type: application/json
+date: Fri, 28 Aug 2026 17:49:58 GMT
+access-control-allow-credentials: true
+vary: origin, access-control-request-method, access-control-request-headers
+content-length: 48
+
+{"error":"enabled factory product","status":404}
+===== invalid license response =====
+HTTP/2 200
+content-type: application/json
+date: Fri, 28 Aug 2026 17:49:58 GMT
+access-control-allow-credentials: true
+access-control-allow-origin: https://lesson-code-room.sociobot.in
+cache-control: no-store
+vary: origin, access-control-request-method, access-control-request-headers
+content-length: 52
+
+{"expires_at":null,"reason":"invalid","valid":false}

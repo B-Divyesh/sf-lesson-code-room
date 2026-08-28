@@ -1,0 +1,208 @@
+{
+  "create": {
+    "status": 200,
+    "room": {
+      "id": "NYCCFC",
+      "title": "Independent QA room",
+      "instructions": "Change the heading, run the page, and mark done.",
+      "html": "<main><h1>QA starter</h1></main>",
+      "css": "body { color: #123456; }",
+      "javascript": "document.body.dataset.ready = \"yes\";",
+      "capacity": 10,
+      "is_demo": false,
+      "expires_at": 1788025813
+    },
+    "paidCapacity": false
+  },
+  "capacity": {
+    "statuses": [
+      409,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      409,
+      200
+    ],
+    "accepted": 10,
+    "rejected": 2
+  },
+  "boundaries": {
+    "blankTitle": {
+      "status": 400,
+      "body": {
+        "error": "invalid_room",
+        "message": "Use an exercise title from 1 to 80 characters."
+      }
+    },
+    "title81": {
+      "status": 400,
+      "body": {
+        "error": "invalid_room",
+        "message": "Use an exercise title from 1 to 80 characters."
+      }
+    },
+    "blankInstructions": {
+      "status": 400,
+      "body": {
+        "error": "invalid_room",
+        "message": "Add instructions from 1 to 600 characters."
+      }
+    },
+    "instructions601": {
+      "status": 400,
+      "body": {
+        "error": "invalid_room",
+        "message": "Add instructions from 1 to 600 characters."
+      }
+    },
+    "html50001": {
+      "status": 400,
+      "body": {
+        "error": "invalid_room",
+        "message": "Keep HTML under 50 KB."
+      }
+    }
+  },
+  "nameChecks": {
+    "blank": {
+      "status": 400,
+      "body": {
+        "error": "invalid_name",
+        "message": "Use a screen name from 1 to 24 characters."
+      }
+    },
+    "unicode24": {
+      "status": 200,
+      "body": {
+        "participant": {
+          "id": "QFXdVFSQXJPm",
+          "name": "🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉🦉",
+          "status": "joined",
+          "joined_at": 1787939416,
+          "updated_at": 1787939416
+        }
+      }
+    },
+    "unicode25": {
+      "status": 400,
+      "body": {
+        "error": "invalid_name",
+        "message": "Use a screen name from 1 to 24 characters."
+      }
+    }
+  },
+  "progress": {
+    "wrongToken": {
+      "status": 403,
+      "body": {
+        "error": "forbidden",
+        "message": "This learner link is no longer active. Join the room again."
+      }
+    },
+    "invalidState": {
+      "status": 400,
+      "body": {
+        "error": "invalid_status",
+        "message": "Progress must be Ran code or Done."
+      }
+    },
+    "done": {
+      "status": 200,
+      "body": {
+        "id": "9CJaZzZ3oxs-",
+        "name": "Learner 2",
+        "status": "done",
+        "joined_at": 1787939413,
+        "updated_at": 1787939417
+      }
+    },
+    "wrongTeacher": {
+      "status": 403,
+      "body": {
+        "error": "forbidden",
+        "message": "The teacher link is not valid for this room."
+      }
+    },
+    "teacher": {
+      "status": 200,
+      "body": {
+        "participants": [
+          {
+            "name": "Learner 4",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 5",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 7",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 2",
+            "status": "done"
+          },
+          {
+            "name": "Learner 12",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 10",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 3",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 9",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 8",
+            "status": "joined"
+          },
+          {
+            "name": "Learner 6",
+            "status": "joined"
+          }
+        ],
+        "counts": {
+          "joined": 9,
+          "ran": 0,
+          "done": 1
+        }
+      }
+    }
+  },
+  "persistence": {
+    "status": 200,
+    "sameId": true,
+    "lowercaseStatus": 200,
+    "missingStatus": 404
+  },
+  "load": {
+    "requests": 100,
+    "ms": 316,
+    "statusCounts": {
+      "200": 100
+    }
+  },
+  "rate": {
+    "requests": 48,
+    "statusCounts": {
+      "200": 39,
+      "429": 9
+    },
+    "retryAfter": [
+      "1"
+    ]
+  }
+}

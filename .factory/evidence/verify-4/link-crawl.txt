@@ -1,0 +1,5 @@
+https://lesson-code-room.sociobot.in/favicon.svg status=200 final=https://lesson-code-room.sociobot.in/favicon.svg
+https://lesson-code-room.sociobot.in/apple-touch-icon.png status=200 final=https://lesson-code-room.sociobot.in/apple-touch-icon.png
+https://lesson-code-room.sociobot.in/assets/social-card.webp status=200 final=https://lesson-code-room.sociobot.in/assets/social-card.webp
+https://hello-factory.sociobot.in status=200 final=https://hello-factory.sociobot.in/
+https://api.sociobot.in/api/v1/products/lesson-code-room/checkout status=404 final=https://api.sociobot.in/api/v1/products/lesson-code-room/checkout
