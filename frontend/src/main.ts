@@ -289,6 +289,11 @@ async function refreshCachedLicense(status: HTMLElement): Promise<void> {
 }
 
 async function demoPage(): Promise<void> {
+  // Reset can be initiated from the teacher screen itself. Stop that screen's
+  // polling before replacing its DOM so an old room can never paint into the
+  // fresh demo room.
+  cleanupRoute?.();
+  cleanupRoute = undefined;
   setMeta('Demo — Lesson Code Room', 'Try a sample coding room with three learner progress states. Demo data is temporary and separate.', '/demo');
   shell(`<main id="main" class="loading-page"><h1>Opening the sample room</h1><div class="lamp-loader" aria-hidden="true"></div><p>This takes one short moment.</p></main>`, demoBanner());
   try {
@@ -419,14 +424,14 @@ async function roomPage(roomId: string): Promise<void> {
     const saved = sessionStorage.getItem(`learner:${room.id}`);
     if (saved) {
       const session = JSON.parse(saved) as { learner_token: string; name: string };
-      renderWorkbench(room, session.learner_token, session.name);
-    } else renderJoin(room);
+      renderWorkbench(room, session.learner_token, session.name, room.is_demo);
+    } else renderJoin(room, room.is_demo);
   } catch (caught) {
     renderErrorPage('This room is unavailable', caught instanceof Error ? caught.message : 'Check the room code.', '/', 'Return home');
   }
 }
 
-function renderJoin(room: Room): void {
+function renderJoin(room: Room, demo: boolean): void {
   setMeta(`Join ${room.title} — Lesson Code Room`, `Choose a screen name and join ${room.title}.`, `/room/${room.id}`);
   shell(`<main id="main" class="join-page">
     <section class="join-card">
@@ -441,7 +446,8 @@ function renderJoin(room: Room): void {
         <p id="join-error" class="form-error" role="alert"></p>
       </form>
     </section>
-  </main>`);
+  </main>`, demo ? demoBanner() : '');
+  if (demo) bindDemoBanner();
   const form = document.querySelector<HTMLFormElement>('#join-form')!;
   const input = form.elements.namedItem('name') as HTMLInputElement;
   document.querySelector('#random-name')?.addEventListener('click', () => {
@@ -459,7 +465,7 @@ function renderJoin(room: Room): void {
     try {
       const joined = await request<{ learner_token: string; participant: Participant }>(`/api/rooms/${room.id}/join`, { method: 'POST', body: JSON.stringify({ name: input.value }) });
       sessionStorage.setItem(`learner:${room.id}`, JSON.stringify({ learner_token: joined.learner_token, name: joined.participant.name }));
-      renderWorkbench(room, joined.learner_token, joined.participant.name);
+      renderWorkbench(room, joined.learner_token, joined.participant.name, demo);
     } catch (caught) {
       error.textContent = caught instanceof Error ? caught.message : 'The room could not be joined. Try again.';
       button.disabled = false;
@@ -468,7 +474,7 @@ function renderJoin(room: Room): void {
   });
 }
 
-function renderWorkbench(room: Room, learnerToken: string, name: string): void {
+function renderWorkbench(room: Room, learnerToken: string, name: string, demo: boolean): void {
   setMeta(`${room.title} — Lesson Code Room`, `Edit and run the ${room.title} exercise.`, `/room/${room.id}`);
   shell(`<main id="main" class="workbench-page">
     <section class="workbench-heading">
@@ -498,7 +504,8 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
         <iframe id="result-frame" title="Your exercise preview" sandbox="allow-scripts"></iframe>
       </div>
     </section>
-  </main>`);
+  </main>`, demo ? demoBanner() : '');
+  if (demo) bindDemoBanner();
   const original = { html: room.html, css: room.css, javascript: room.javascript };
   const fields = () => ({
     html: document.querySelector<HTMLTextAreaElement>('[data-code="html"]')!.value,
@@ -507,16 +514,23 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
   });
   const iframe = document.querySelector<HTMLIFrameElement>('#result-frame')!;
   const runStatus = document.querySelector<HTMLElement>('#run-status')!;
+  const markDone = document.querySelector<HTMLButtonElement>('#mark-done')!;
   const run = async () => {
     const code = fields();
-    loadSandbox(iframe, code.html, code.css, code.javascript);
-    runStatus.textContent = 'Page ran just now';
-    await sendProgress(room.id, learnerToken, 'ran', runStatus);
+    runStatus.textContent = 'Running preview…';
+    try {
+      await runSandbox(iframe, code.html, code.css, code.javascript);
+      const status = await sendProgress(room.id, learnerToken, 'ran', runStatus);
+      if (status === 'done') markDone.textContent = 'Marked as done';
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : 'The preview could not run.';
+      runStatus.textContent = `Your code could not run: ${message} Fix the code and run again.`;
+    }
   };
   document.querySelector('#run-code')?.addEventListener('click', () => void run());
   document.querySelector('#mark-done')?.addEventListener('click', async () => {
-    await sendProgress(room.id, learnerToken, 'done', runStatus);
-    document.querySelector<HTMLButtonElement>('#mark-done')!.textContent = 'Marked as done';
+    const status = await sendProgress(room.id, learnerToken, 'done', runStatus);
+    if (status === 'done') markDone.textContent = 'Marked as done';
   });
   document.querySelector('#reset-code')?.addEventListener('click', () => {
     if (!confirm('Reset all three files to the teacher’s starter code? Your edits will be replaced.')) return;
@@ -562,18 +576,39 @@ function bindOfflineState(): void {
   window.addEventListener('offline', sync, { once: true });
 }
 
-async function sendProgress(roomId: string, token: string, status: 'ran' | 'done', output: HTMLElement): Promise<void> {
+async function sendProgress(roomId: string, token: string, status: 'ran' | 'done', output: HTMLElement): Promise<Participant['status'] | undefined> {
   try {
-    await request(`/api/rooms/${roomId}/progress`, { method: 'POST', body: JSON.stringify({ learner_token: token, status }) });
-    output.textContent = status === 'done' ? 'Teacher can see: Done' : 'Teacher can see: Ran code';
+    const participant = await request<Participant>(`/api/rooms/${roomId}/progress`, { method: 'POST', body: JSON.stringify({ learner_token: token, status }) });
+    output.textContent = participant.status === 'done' ? 'Teacher can see: Done' : 'Teacher can see: Ran code';
+    return participant.status;
   } catch (caught) {
     output.textContent = caught instanceof ApiFailure && caught.code === 'offline' ? 'Preview ran. Reconnect, then run again to update progress.' : caught instanceof Error ? caught.message : 'Progress did not update.';
+    return undefined;
   }
 }
 
-function loadSandbox(frame: HTMLIFrameElement, html: string, css: string, javascript: string): void {
+function runSandbox(frame: HTMLIFrameElement, html: string, css: string, javascript: string): Promise<void> {
+  const runId = crypto.randomUUID();
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => finish(new Error('The preview took too long to start.')), 4_000);
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== frame.contentWindow || event.data?.runId !== runId) return;
+      if (event.data.type === 'lesson-code-ready') finish();
+      if (event.data.type === 'lesson-code-error') finish(new Error(String(event.data.message || 'Check the JavaScript and try again.')));
+    };
+    const finish = (error?: Error) => {
+      window.clearTimeout(timeout);
+      window.removeEventListener('message', onMessage);
+      if (error) reject(error); else resolve();
+    };
+    window.addEventListener('message', onMessage);
+    loadSandbox(frame, html, css, javascript, runId);
+  });
+}
+
+function loadSandbox(frame: HTMLIFrameElement, html: string, css: string, javascript: string, runId?: string): void {
   frame.addEventListener('load', () => {
-    frame.contentWindow?.postMessage({ type: 'lesson-code', html, css, javascript }, '*');
+    frame.contentWindow?.postMessage({ type: 'lesson-code', html, css, javascript, runId }, '*');
   }, { once: true });
   frame.src = `/sandbox.html#${Date.now()}`;
 }
@@ -596,7 +631,7 @@ function legalPage(kind: 'privacy' | 'terms'): void {
       <h2>Use the room for teaching</h2><p>You may use the service for lawful HTML, CSS, and JavaScript lessons. Do not use it to harm systems, invade privacy, or monitor learners.</p>
       <h2>Keep the teacher link private</h2><p>Anyone with the teacher link can see learner screen names and progress. The teacher is responsible for sharing it carefully.</p>
       <h2>Short-lived service</h2><p>Rooms are temporary and may be removed after they expire. Keep your own copy of starter code that matters.</p>
-      <h2>Room Plus</h2><p data-claim="paid-checkout">Room Plus costs $29 once and raises new rooms to 30 learners. Sociobot hosts checkout and verifies the license.</p>
+      <h2>Room Plus</h2><p data-claim="paid-checkout">Room Plus costs $29 once and raises new rooms to 30 learners. Sociobot hosts checkout and verifies the license. Sociobot and Dodo are the merchant of record. Refunds are handled there and revoke the license.</p>
       <h2>Service limits</h2><p>The service is provided without a promise of uninterrupted access. We may block abuse or unsafe use.</p>
     </main>`);
   }

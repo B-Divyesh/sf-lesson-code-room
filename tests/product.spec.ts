@@ -90,6 +90,35 @@ test('@claim:demo-reset reset creates isolated temporary sample data', async ({ 
   expect((await request.get(`/api/rooms/${liveRoom.id}`)).ok()).toBeTruthy();
 });
 
+test('reset demo cancels the previous room poll before showing the fresh room', async ({ page, request }) => {
+  await page.goto('/demo');
+  const firstJoinUrl = await page.getByLabel('Learner join link').inputValue();
+  const firstRoom = new URL(firstJoinUrl).pathname.split('/').pop()!;
+  const joined = await request.post(`/api/rooms/${firstRoom}/join`, { data: { name: 'Old Room Only' } });
+  expect(joined.ok()).toBeTruthy();
+  await expect(page.getByText('Old Room Only')).toBeVisible({ timeout: 7_000 });
+
+  await page.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(page.getByLabel('Learner join link')).not.toHaveValue(firstJoinUrl);
+  await expect(page.getByText('Moss Finch')).toBeVisible();
+  await page.waitForTimeout(3_000);
+  await expect(page.getByText('Old Room Only')).toHaveCount(0);
+});
+
+test('demo join and workbench retain the persistent sandbox banner', async ({ page }) => {
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reset demo' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start for real' })).toBeVisible();
+  await page.getByLabel('Screen name').fill('Banner Finch');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reset demo' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start for real' })).toBeVisible();
+});
+
 test('@claim:learner-reset restores all starter files and the rendered preview', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/demo');
@@ -145,7 +174,7 @@ test('@claim:privacy-code learner edits are not sent in progress updates', async
   await page.getByLabel('Screen name').fill('Amber Owl');
   await page.getByRole('button', { name: 'Join the exercise' }).click();
   const privateCode = 'PRIVATE_LEARNER_CHANGE_9182';
-  await page.locator('[data-code="html"]').fill(`<h1>${privateCode}</h1>`);
+  await page.locator('[data-code="html"]').fill(`<main><button id="signal">Run</button><h1>${privateCode}</h1><p id="reply"></p></main>`);
   const requestsBeforeRun: string[] = [];
   const observe = (request: import('@playwright/test').Request) => {
     if (request.url().includes('/progress') && request.method() === 'POST') requestsBeforeRun.push(request.postData() ?? '');
@@ -236,7 +265,7 @@ test('@claim:offline-preview a loaded workbench edits and previews while offline
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
   await expect(page.getByText('You are offline. Editing and preview still work.')).toBeVisible();
-  await page.getByLabel('HTML code').fill('<main><h1>Offline preview changed</h1></main>');
+  await page.getByLabel('HTML code').fill('<main><h1>Offline preview changed</h1><button id="signal">Run</button><p id="reply"></p></main>');
   await page.getByRole('button', { name: 'Run the page' }).click();
   await expect(page.frameLocator('#result-frame').getByRole('heading', { name: 'Offline preview changed' })).toBeVisible();
   await expect(page.getByText('Preview ran. Reconnect, then run again to update progress.')).toBeVisible();
@@ -256,6 +285,37 @@ test('learner preview runs repeatedly without console errors', async ({ page }) 
   await page.getByRole('button', { name: 'Run the page' }).click();
   await expect(page.getByText('Teacher can see: Ran code')).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('a sandbox JavaScript error is visible and does not claim successful progress', async ({ page }) => {
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Error Wren');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await page.getByRole('tab', { name: 'JavaScript' }).click();
+  await page.getByLabel('JavaScript code').fill("throw new Error('Deliberate preview failure');");
+  await page.getByRole('button', { name: 'Run the page' }).click();
+  await expect(page.getByText(/Your code could not run: Deliberate preview failure/)).toBeVisible();
+  await expect(page.getByText('Teacher can see: Ran code')).toHaveCount(0);
+});
+
+test('done progress is monotonic in the API and learner workbench', async ({ page, context }) => {
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  const teacher = page;
+  const learner = await context.newPage();
+  await learner.goto(joinUrl);
+  await learner.getByLabel('Screen name').fill('State Order');
+  await learner.getByRole('button', { name: 'Join the exercise' }).click();
+  await learner.getByRole('button', { name: 'Mark as done' }).click();
+  await expect(learner.getByText('Teacher can see: Done')).toBeVisible();
+  await learner.getByRole('button', { name: 'Run the page' }).click();
+  await expect(learner.getByText('Teacher can see: Done')).toBeVisible();
+  await expect(learner.getByRole('button', { name: 'Marked as done' })).toBeVisible();
+  await expect(teacher.getByText('State Order')).toBeVisible({ timeout: 7_000 });
+  const card = teacher.locator('.participant', { hasText: 'State Order' });
+  await expect(card.getByText('Done', { exact: true })).toBeVisible();
 });
 
 test('@claim:free-capacity demo API reports the free 10 learner limit', async ({ request }) => {
@@ -289,6 +349,10 @@ test('@claim:demo-retention demo API reports two-hour temporary storage', async 
 test('@claim:paid-checkout uses the Sociobot hosted purchase and restore contract', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('link', { name: 'Buy Room Plus' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/lesson-code-room/checkout');
+  const checkout = await page.request.get('https://api.sociobot.in/api/v1/products/lesson-code-room/checkout', { maxRedirects: 0 });
+  expect(checkout.status()).toBeGreaterThanOrEqual(300);
+  expect(checkout.status()).toBeLessThan(400);
+  expect(checkout.headers().location).toBeTruthy();
   await page.route('https://api.sociobot.in/api/v1/products/lesson-code-room/verify**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null }) });
   });
@@ -341,6 +405,11 @@ test('landing, demo, and legal pages have no serious accessibility findings', as
   await page.getByRole('button', { name: 'Join the exercise' }).click();
   results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
+
+  const missing = await page.goto('/missing-classroom');
+  expect(missing?.status()).toBe(404);
+  results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
 });
 
 test('@claim:rate-limit API bursts are limited with retry guidance', async ({ request }) => {
@@ -349,6 +418,46 @@ test('@claim:rate-limit API bursts are limited with retry guidance', async ({ re
   const limited = responses.filter((response) => response.status() === 429);
   expect(limited).toHaveLength(35);
   expect(limited.every((response) => response.headers()['retry-after'] === '1')).toBe(true);
+});
+
+test('rotating a caller supplied forwarding value cannot evade the ingress client limit', async ({ request }) => {
+  const responses = await Promise.all(Array.from({ length: 48 }, (_, index) => request.post('/api/demo', {
+    data: {}, headers: { 'X-Forwarded-For': `198.51.100.${index + 1}, 203.0.113.9` },
+  })));
+  expect(responses.filter((response) => response.status() === 200)).toHaveLength(13);
+  const limited = responses.filter((response) => response.status() === 429);
+  expect(limited).toHaveLength(35);
+  expect(limited.every((response) => response.headers()['retry-after'] === '1')).toBe(true);
+});
+
+test('participant API data is not stored and only hashed assets are immutable', async ({ request }) => {
+  const demo = await request.post('/api/demo', { data: {} });
+  expect(demo.headers()['cache-control']).toBe('no-store');
+  const created = await demo.json();
+  const room = created.room;
+  const progress = await request.get(`/api/rooms/${room.id}/progress`, { headers: { 'x-teacher-token': created.teacher_token } });
+  // The room fetch itself is participant-adjacent public room data and must not be cached either.
+  const roomResponse = await request.get(`/api/rooms/${room.id}`);
+  expect(roomResponse.headers()['cache-control']).toBe('no-store');
+  expect(progress.headers()['cache-control']).toBe('no-store');
+  const hero = await request.get('/assets/classroom-hero.webp');
+  expect(hero.headers()['cache-control'] ?? '').not.toContain('immutable');
+});
+
+test('390px navigation and footer links meet the 44px touch target baseline', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  for (const link of [page.getByLabel('Lesson Code Room home'), page.getByRole('link', { name: 'Demo' }), page.locator('.footer-links a').nth(0), page.locator('.footer-links a').nth(1), page.locator('.footer-links a').nth(2)]) {
+    const box = await link.boundingBox();
+    expect(box, 'interactive target must be measurable').not.toBeNull();
+    expect(Math.min(box!.width, box!.height), `${await link.innerText()} measured ${box!.width}×${box!.height}`).toBeGreaterThanOrEqual(44);
+  }
+});
+
+test('terms name the merchant of record and refund effect', async ({ page }) => {
+  await page.goto('/terms');
+  await expect(page.getByText(/Sociobot and Dodo are the merchant of record/)).toBeVisible();
+  await expect(page.getByText(/Refunds are handled there and revoke the license/)).toBeVisible();
 });
 
 test('container defaults to the shared durable store instead of replica-local SQLite', async () => {

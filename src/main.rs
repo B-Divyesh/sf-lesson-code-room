@@ -38,6 +38,8 @@ const DEMO_TTL_SECONDS: i64 = 2 * 60 * 60;
 // The container app scales to at most three replicas. Thirteen per replica keeps
 // the fleet-wide burst ceiling below 40 even when ingress spreads one client.
 const RATE_LIMIT_PER_REPLICA: u32 = 13;
+const RATE_WINDOW: Duration = Duration::from_secs(1);
+const MAX_RATE_KEYS: usize = 4_096;
 // The factory deployment attaches this one user-assigned identity to every product container.
 // Client IDs are public identifiers, not credentials; the platform issues the actual short-lived token.
 const FACTORY_RUNTIME_IDENTITY_CLIENT_ID: &str = "ba10d5bc-6375-4325-8892-4c7a5be500ca";
@@ -992,7 +994,10 @@ async fn update_participant(
 ) -> Result<Participant, ApiError> {
     match store {
         Store::Sqlite(db) => {
-            let result = sqlx::query("UPDATE participants SET status = ?, updated_at = ? WHERE room_id = ? AND learner_token = ?")
+            // Progress is a one-way signal. In particular, a later preview run
+            // must not make a learner who has marked the exercise done look
+            // unfinished to their teacher.
+            let result = sqlx::query("UPDATE participants SET status = CASE WHEN status = 'done' THEN 'done' ELSE ? END, updated_at = ? WHERE room_id = ? AND learner_token = ?")
                 .bind(status).bind(now).bind(room_id).bind(learner_token).execute(db).await.map_err(db_error)?;
             if result.rows_affected() == 0 {
                 return Err(api_error(
@@ -1004,20 +1009,31 @@ async fn update_participant(
                 .bind(room_id).bind(learner_token).fetch_one(db).await.map_err(db_error)
         }
         Store::Blob(blob) => {
-            for path in blob.list(&format!("rooms/{room_id}/participants/")).await? {
-                if let Some(mut stored) = blob.get::<StoredParticipant>(&path).await? {
-                    if constant_time_eq(stored.learner_token.as_bytes(), learner_token.as_bytes()) {
-                        stored.participant.status = status.to_string();
-                        stored.participant.updated_at = now;
-                        blob.put(&path, &stored, false).await?;
-                        return Ok(stored.participant);
+            let lease = blob.acquire_room_lease(room_id).await?;
+            let outcome = async {
+                for path in blob.list(&format!("rooms/{room_id}/participants/")).await? {
+                    if let Some(mut stored) = blob.get::<StoredParticipant>(&path).await? {
+                        if constant_time_eq(
+                            stored.learner_token.as_bytes(),
+                            learner_token.as_bytes(),
+                        ) {
+                            if stored.participant.status != "done" {
+                                stored.participant.status = status.to_string();
+                            }
+                            stored.participant.updated_at = now;
+                            blob.put(&path, &stored, false).await?;
+                            return Ok(stored.participant);
+                        }
                     }
                 }
+                Err(api_error(
+                    "forbidden",
+                    "This learner link is no longer active. Join the room again.",
+                ))
             }
-            Err(api_error(
-                "forbidden",
-                "This learner link is no longer active. Join the room again.",
-            ))
+            .await;
+            blob.release_room_lease(room_id, &lease).await;
+            outcome
         }
     }
 }
@@ -1215,22 +1231,33 @@ async fn rate_limit(
     request: Request,
     next: Next,
 ) -> Response {
+    // Container Apps appends the connecting client address to X-Forwarded-For.
+    // Values to its left may have been supplied by a caller, so the only
+    // ingress-derived value we accept is the right-most valid address.
     let key = request
         .headers()
         .get("x-forwarded-for")
         .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.split(',').next())
+        .and_then(|value| value.rsplit(',').next())
         .map(str::trim)
         .filter(|value| value.parse::<IpAddr>().is_ok())
         .map(str::to_string)
         .unwrap_or_else(|| address.ip().to_string());
     let mut windows = state.rate.lock().await;
     let now = Instant::now();
+    windows.retain(|_, window| now.duration_since(window.started) < RATE_WINDOW);
+    if !windows.contains_key(&key) && windows.len() >= MAX_RATE_KEYS {
+        let mut response = (StatusCode::TOO_MANY_REQUESTS, Json(serde_json::json!({"error":"rate_limited","message":"Too many requests. Wait one second and try again."}))).into_response();
+        response
+            .headers_mut()
+            .insert(header::RETRY_AFTER, HeaderValue::from_static("1"));
+        return response;
+    }
     let window = windows.entry(key).or_insert(RateWindow {
         started: now,
         count: 0,
     });
-    if now.duration_since(window.started) >= Duration::from_secs(1) {
+    if now.duration_since(window.started) >= RATE_WINDOW {
         window.started = now;
         window.count = 0;
     }
@@ -1248,7 +1275,9 @@ async fn rate_limit(
 
 async fn security_headers(request: Request<Body>, next: Next) -> Response {
     let is_sandbox = request.uri().path() == "/sandbox.html";
-    let is_hashed_asset = request.uri().path().starts_with("/assets/");
+    let path = request.uri().path();
+    let is_api = path.starts_with("/api/");
+    let is_hashed_asset = is_content_hashed_asset(path);
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     headers.insert(
@@ -1275,13 +1304,29 @@ async fn security_headers(request: Request<Body>, next: Next) -> Response {
             "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.sociobot.in; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in; frame-ancestors 'none'"
         }),
     );
-    if is_hashed_asset {
+    if is_api {
+        headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    } else if is_hashed_asset {
         headers.insert(
             header::CACHE_CONTROL,
             HeaderValue::from_static("public, max-age=31536000, immutable"),
         );
     }
     response
+}
+
+fn is_content_hashed_asset(path: &str) -> bool {
+    let Some(file) = path.strip_prefix("/assets/") else {
+        return false;
+    };
+    let Some((_, suffix)) = file.rsplit_once('-') else {
+        return false;
+    };
+    let hash = suffix.split('.').next().unwrap_or_default();
+    hash.len() >= 8
+        && hash
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric())
 }
 
 fn random_token(size: usize) -> String {
@@ -1340,5 +1385,12 @@ mod tests {
     fn token_comparison_rejects_different_lengths() {
         assert!(!constant_time_eq(b"teacher", b"teach"));
         assert!(constant_time_eq(b"teacher", b"teacher"));
+    }
+
+    #[test]
+    fn only_content_hashed_assets_receive_immutable_caching() {
+        assert!(is_content_hashed_asset("/assets/index-BBeU5N0A.js"));
+        assert!(!is_content_hashed_asset("/assets/classroom-hero.webp"));
+        assert!(!is_content_hashed_asset("/assets/classroom-hero-900.webp"));
     }
 }

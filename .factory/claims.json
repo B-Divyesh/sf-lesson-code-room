@@ -109,6 +109,6 @@
     "claim": "Room Plus is a $29 one-time license that raises new rooms to 30 learners and uses Sociobot's hosted checkout.",
     "where": "landing paid section, /privacy, and /terms",
     "test": "npm test -- --grep @claim:paid-checkout",
-    "sandbox": "fresh landing page; assert the Sociobot checkout target, restore against a recorded valid response, and inspect stored token and verdict"
+    "sandbox": "fresh landing page; assert the Sociobot checkout target resolves to its hosted checkout, restore against a recorded valid response, and inspect stored token and verdict"
   }
 ]
