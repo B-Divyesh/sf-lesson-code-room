@@ -1,0 +1,58 @@
+[
+  {
+    "id": "anonymous-room",
+    "claim": "Learners join without accounts, and teachers see Joined, Ran code, or Done.",
+    "where": "landing first screen and how-it-works section",
+    "test": "npm test -- --grep @claim:anonymous-room",
+    "sandbox": "fresh browser context opened at /demo; join through its learner link and run the page"
+  },
+  {
+    "id": "sandbox-run",
+    "claim": "Editable HTML, CSS, and JavaScript run in a network-blocked browser sandbox.",
+    "where": "creator and learner workbench",
+    "test": "npm test -- --grep @claim:sandbox-run",
+    "sandbox": "fresh /demo learner; change HTML and JavaScript, run it, and assert an attempted external request never leaves"
+  },
+  {
+    "id": "demo-reset",
+    "claim": "The demo uses temporary sample data and resets to a fresh room.",
+    "where": "/demo banner",
+    "test": "npm test -- --grep @claim:demo-reset",
+    "sandbox": "fresh /demo; reset and compare room links while checking seeded learners"
+  },
+  {
+    "id": "privacy-code",
+    "claim": "Learner edits stay in the learner's browser.",
+    "where": "landing privacy section and /privacy",
+    "test": "npm test -- --grep @claim:privacy-code",
+    "sandbox": "fresh /demo learner; insert a unique code marker and assert it is absent from the progress request"
+  },
+  {
+    "id": "free-capacity",
+    "claim": "Free rooms allow 10 learners.",
+    "where": "landing facts and paid section",
+    "test": "npm test -- --grep @claim:free-capacity",
+    "sandbox": "fresh /demo API response; assert room capacity"
+  },
+  {
+    "id": "room-retention",
+    "claim": "Live rooms expire after 24 hours.",
+    "where": "landing facts, creator, and /privacy",
+    "test": "npm test -- --grep @claim:room-retention",
+    "sandbox": "fresh API room using sample code; assert its expiry timestamp is 24 hours ahead"
+  },
+  {
+    "id": "demo-retention",
+    "claim": "Demo rooms expire after two hours.",
+    "where": "/privacy",
+    "test": "npm test -- --grep @claim:demo-retention",
+    "sandbox": "fresh /demo API response; assert its expiry timestamp is two hours ahead"
+  },
+  {
+    "id": "paid-checkout",
+    "claim": "Room Plus is a $29 one-time license that raises new rooms to 30 learners.",
+    "where": "landing paid section and /terms",
+    "test": "npm test -- --grep @claim:paid-checkout",
+    "sandbox": "fresh landing page; assert Sociobot checkout target and restore a license against a recorded valid response"
+  }
+]

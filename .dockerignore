@@ -1,0 +1,11 @@
+.git
+.github
+node_modules
+target
+dist
+data
+test-results
+graphify-out
+*.log
+.env*
+assets/src/*.png

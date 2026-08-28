@@ -1,4 +1,13 @@
 {
+  "routes": [
+    {
+      "route": "/sandbox.html",
+      "headers": {
+        "X-Frame-Options": "SAMEORIGIN",
+        "Content-Security-Policy": "default-src 'none'; script-src 'self' blob:; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; media-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'self'"
+      }
+    }
+  ],
   "navigationFallback": { "rewrite": "/index.html", "exclude": ["/api/*", "/assets/*", "*.xml", "*.txt"] },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",

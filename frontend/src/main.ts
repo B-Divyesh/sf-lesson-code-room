@@ -363,7 +363,7 @@ function renderTeacher(room: Room, teacherToken: string, demo: boolean): void {
   </main>`, demo ? demoBanner() : '');
   bindDemoBanner();
   const preview = document.querySelector<HTMLIFrameElement>('.teacher-preview iframe')!;
-  preview.srcdoc = sandboxDocument(room.html, room.css, room.javascript);
+  loadSandbox(preview, room.html, room.css, room.javascript);
   document.querySelector('#copy-link')?.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(joinUrl);
@@ -510,7 +510,7 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
   const runStatus = document.querySelector<HTMLElement>('#run-status')!;
   const run = async () => {
     const code = fields();
-    iframe.srcdoc = sandboxDocument(code.html, code.css, code.javascript);
+    loadSandbox(iframe, code.html, code.css, code.javascript);
     runStatus.textContent = 'Page ran just now';
     await sendProgress(room.id, learnerToken, 'ran', runStatus);
   };
@@ -524,12 +524,12 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
     document.querySelector<HTMLTextAreaElement>('[data-code="html"]')!.value = original.html;
     document.querySelector<HTMLTextAreaElement>('[data-code="css"]')!.value = original.css;
     document.querySelector<HTMLTextAreaElement>('[data-code="javascript"]')!.value = original.javascript;
-    iframe.srcdoc = sandboxDocument(original.html, original.css, original.javascript);
+    loadSandbox(iframe, original.html, original.css, original.javascript);
     runStatus.textContent = 'Starter code restored';
   });
   bindTabs();
   bindOfflineState();
-  iframe.srcdoc = sandboxDocument(room.html, room.css, room.javascript);
+  loadSandbox(iframe, room.html, room.css, room.javascript);
 }
 
 function bindTabs(): void {
@@ -572,10 +572,11 @@ async function sendProgress(roomId: string, token: string, status: 'ran' | 'done
   }
 }
 
-function sandboxDocument(html: string, css: string, javascript: string): string {
-  const safeCss = css.replace(/<\/style/gi, '<\\/style');
-  const safeScript = javascript.replace(/<\/script/gi, '<\\/script');
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; media-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'"><style>${safeCss}</style></head><body>${html}<script>${safeScript}<\/script></body></html>`;
+function loadSandbox(frame: HTMLIFrameElement, html: string, css: string, javascript: string): void {
+  frame.addEventListener('load', () => {
+    frame.contentWindow?.postMessage({ type: 'lesson-code', html, css, javascript }, '*');
+  }, { once: true });
+  frame.src = `/sandbox.html#${Date.now()}`;
 }
 
 function legalPage(kind: 'privacy' | 'terms'): void {

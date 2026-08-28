@@ -29,6 +29,8 @@ All text pairings meet WCAG AA. State always includes a word or symbol; color is
 - Body and UI: `Atkinson Hyperlegible`, self-hosted, 400/700. Its distinct glyphs support scanning, code-adjacent controls, and low-resolution screen shares.
 - Code: platform monospace stack. No third font payload.
 
+Fraunces and Atkinson Hyperlegible are bundled through Fontsource under the SIL Open Font License 1.1. The repository records them in `THIRD_PARTY_NOTICES.md`; no runtime font request leaves the site.
+
 ## Spacing and shape
 
 - Base grid: 8 px. Main steps: 8, 16, 24, 32, 48, 72, 96.
