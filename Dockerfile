@@ -27,7 +27,6 @@ COPY --from=rust-builder /source/target/release/lesson-code-room /app/lesson-cod
 COPY --from=web-builder /source/dist /app/dist
 ENV PORT=8080
 ENV STATIC_DIR=/app/dist
-ENV DATABASE_URL=sqlite:///data/lesson-code-room.db
 USER app
 EXPOSE 8080
 ENTRYPOINT ["/app/lesson-code-room"]

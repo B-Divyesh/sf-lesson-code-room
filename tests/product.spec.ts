@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { readFile } from 'node:fs/promises';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -147,4 +148,22 @@ test('all API routes return Retry-After when one client exceeds the limit', asyn
   const limited = responses.find((response) => response.status() === 429);
   expect(limited).toBeTruthy();
   expect(limited?.headers()['retry-after']).toBe('1');
+});
+
+test('container defaults to the shared durable store instead of replica-local SQLite', async () => {
+  const [dockerfile, server] = await Promise.all([
+    readFile('Dockerfile', 'utf8'),
+    readFile('src/main.rs', 'utf8'),
+  ]);
+  expect(dockerfile).not.toMatch(/^ENV DATABASE_URL=/m);
+  expect(server).toContain('managed-identity Azure Blob storage (shared)');
+  expect(server).toContain('Store::Blob(store)');
+});
+
+test('hashed production assets use the immutable cache policy', async ({ page, request }) => {
+  await page.goto('/');
+  const assetPath = await page.locator('script[type="module"]').getAttribute('src');
+  expect(assetPath).toMatch(/^\/assets\/.*\.js$/);
+  const response = await request.head(assetPath!);
+  expect(response.headers()['cache-control']).toBe('public, max-age=31536000, immutable');
 });

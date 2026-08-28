@@ -19,7 +19,7 @@ The learner link on the page opens a real editable workbench for that temporary 
 
 ## Isolation and reset
 
-Demo rooms use random room and teacher tokens and are marked `is_demo` in SQLite. They never read or modify live rooms. They expire after two hours and are removed by normal cleanup. The browser stores no demo identifier in local or session storage.
+Demo rooms use random room and teacher tokens and are marked `is_demo` in the room store. They never read or modify live rooms. They expire after two hours and are removed by normal cleanup. The browser stores no demo identifier in local or session storage. Production uses a dedicated shared Azure Blob container through the service's managed identity; explicit local test URLs use SQLite.
 
 **Reset demo** provisions a new random demo room. **Start for real** leaves the demo and opens the live room creator. The persistent banner identifies demo mode on every demo view.
 
