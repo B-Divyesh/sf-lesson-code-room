@@ -164,8 +164,14 @@ struct ProgressUpdate {
 
 #[derive(Serialize)]
 struct ProgressResponse {
-    participants: Vec<Participant>,
+    participants: Vec<TeacherParticipant>,
     counts: ProgressCounts,
+}
+
+#[derive(Serialize)]
+struct TeacherParticipant {
+    name: String,
+    status: String,
 }
 
 #[derive(Serialize)]
@@ -708,6 +714,13 @@ async fn get_progress(
         ran: participants.iter().filter(|p| p.status == "ran").count(),
         done: participants.iter().filter(|p| p.status == "done").count(),
     };
+    let participants = participants
+        .into_iter()
+        .map(|participant| TeacherParticipant {
+            name: participant.name,
+            status: participant.status,
+        })
+        .collect();
     Ok(Json(ProgressResponse {
         participants,
         counts,

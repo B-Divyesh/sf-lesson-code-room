@@ -31,6 +31,23 @@ test('@claim:anonymous-room learners join without an account and progress reache
   await expect(learner.getByText('Teacher can see: Ran code')).toBeVisible();
   await expect(page.getByText('Green Kite')).toBeVisible({ timeout: 7_000 });
   await expect(page.getByText('Ran code', { exact: true })).toHaveCount(2);
+  await learner.getByRole('button', { name: 'Mark as done' }).click();
+  await expect(learner.getByText('Teacher can see: Done')).toBeVisible();
+  await expect(page.getByText('Done', { exact: true })).toHaveCount(2, { timeout: 7_000 });
+});
+
+test('@claim:custom-room a teacher creates and shares custom starter code', async ({ page, context }) => {
+  await page.goto('/');
+  await page.getByLabel('Exercise title').fill('Change one signal');
+  await page.getByLabel('HTML').fill('<main><h1>Private starter heading</h1></main>');
+  await page.getByRole('button', { name: 'Create room and join link' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Change one signal');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  const learner = await context.newPage();
+  await learner.goto(joinUrl);
+  await learner.getByLabel('Screen name').fill('Copper Wren');
+  await learner.getByRole('button', { name: 'Join the exercise' }).click();
+  await expect(learner.getByLabel('HTML code')).toHaveValue('<main><h1>Private starter heading</h1></main>');
 });
 
 test('@claim:sandbox-run edited code runs inside a network-blocked sandbox', async ({ page }) => {
@@ -58,13 +75,19 @@ test('@claim:sandbox-run edited code runs inside a network-blocked sandbox', asy
   expect(responses.some((url) => url.includes('leak=blocked'))).toBe(false);
 });
 
-test('@claim:demo-reset reset creates a fresh temporary sample room', async ({ page }) => {
+test('@claim:demo-reset reset creates isolated temporary sample data', async ({ page, request }) => {
+  const liveResponse = await request.post('/api/rooms', { data: {
+    title: 'Live room stays separate', instructions: 'Keep this room available.', html: '<h1>Live</h1>', css: '', javascript: '',
+  } });
+  expect(liveResponse.ok()).toBeTruthy();
+  const liveRoom = (await liveResponse.json()).room;
   await page.goto('/demo');
   const first = await page.getByLabel('Learner join link').inputValue();
   await page.getByRole('button', { name: 'Reset demo' }).click();
   const second = await page.getByLabel('Learner join link').inputValue();
   expect(second).not.toBe(first);
   await expect(page.getByText('Moss Finch')).toBeVisible();
+  expect((await request.get(`/api/rooms/${liveRoom.id}`)).ok()).toBeTruthy();
 });
 
 test('@claim:privacy-code learner edits are not sent in progress updates', async ({ page }) => {
@@ -75,11 +98,101 @@ test('@claim:privacy-code learner edits are not sent in progress updates', async
   await page.getByRole('button', { name: 'Join the exercise' }).click();
   const privateCode = 'PRIVATE_LEARNER_CHANGE_9182';
   await page.locator('[data-code="html"]').fill(`<h1>${privateCode}</h1>`);
+  const requestsBeforeRun: string[] = [];
+  const observe = (request: import('@playwright/test').Request) => {
+    if (request.url().includes('/progress') && request.method() === 'POST') requestsBeforeRun.push(request.postData() ?? '');
+  };
+  page.on('request', observe);
+  await page.waitForTimeout(250);
+  expect(requestsBeforeRun).toEqual([]);
   const requestPromise = page.waitForRequest((request) => request.url().includes('/progress') && request.method() === 'POST');
   await page.getByRole('button', { name: 'Run the page' }).click();
   const progressRequest = await requestPromise;
+  page.off('request', observe);
   expect(progressRequest.postData()).not.toContain(privateCode);
+  expect(Object.keys(JSON.parse(progressRequest.postData() ?? '{}')).sort()).toEqual(['learner_token', 'status']);
   expect(JSON.parse(progressRequest.postData() ?? '{}')).toEqual(expect.objectContaining({ status: 'ran' }));
+});
+
+test('@claim:teacher-report-limits teacher reports contain progress but no grades or detailed activity', async ({ request }) => {
+  const demoResponse = await request.post('/api/demo', { data: {} });
+  const demo = await demoResponse.json();
+  const joinResponse = await request.post(`/api/rooms/${demo.room.id}/join`, { data: { name: 'Report Finch' } });
+  const joined = await joinResponse.json();
+  await request.post(`/api/rooms/${demo.room.id}/progress`, { data: { learner_token: joined.learner_token, status: 'ran' } });
+  const progressResponse = await request.get(`/api/rooms/${demo.room.id}/progress`, {
+    headers: { 'x-teacher-token': demo.teacher_token },
+  });
+  const progress = await progressResponse.json();
+  expect(Object.keys(progress).sort()).toEqual(['counts', 'participants']);
+  expect(Object.keys(progress.counts).sort()).toEqual(['done', 'joined', 'ran']);
+  for (const participant of progress.participants) {
+    expect(Object.keys(participant).sort()).toEqual(['name', 'status']);
+    expect(['joined', 'ran', 'done']).toContain(participant.status);
+  }
+  expect(JSON.stringify(progress)).not.toMatch(/grade|score|keystroke|tab|activity|code/i);
+});
+
+test('@claim:product-scope the workbench has code tools but no repository or call controls', async ({ page }) => {
+  const response = await page.goto('/demo');
+  expect(response?.headers()['permissions-policy']).toContain('camera=()');
+  expect(response?.headers()['permissions-policy']).toContain('microphone=()');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Scope Otter');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await expect(page.getByRole('tab')).toHaveCount(3);
+  expect(await page.getByRole('tab').allTextContents()).toEqual(['HTML', 'CSS', 'JavaScript']);
+  await expect(page.locator('video, audio, input[type="file"]')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /repository|grade|video|camera|microphone|call/i })).toHaveCount(0);
+});
+
+test('@claim:no-tracking landing and full demo flow load only product resources', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.url()));
+  await page.goto('/');
+  await page.goto('/privacy');
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Private Lark');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await page.getByRole('button', { name: 'Run the page' }).click();
+  const productOrigin = new URL(page.url()).origin;
+  expect(requests.length).toBeGreaterThan(0);
+  expect(requests.filter((url) => ['http:', 'https:'].includes(new URL(url).protocol) && new URL(url).origin !== productOrigin)).toEqual([]);
+});
+
+test('@claim:session-storage room keys stay in one tab, not persistent browser storage', async ({ page, context }) => {
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  const roomId = new URL(joinUrl).pathname.split('/').pop()!;
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Session Heron');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await expect(page.getByRole('button', { name: 'Run the page' })).toBeVisible();
+  expect(await page.evaluate((key) => sessionStorage.getItem(key), `learner:${roomId}`)).not.toBeNull();
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.startsWith('learner:')))).toEqual([]);
+  const otherTab = await context.newPage();
+  await otherTab.goto(joinUrl);
+  await expect(otherTab.getByLabel('Screen name')).toBeVisible();
+});
+
+test('@claim:offline-preview a loaded workbench edits and previews while offline', async ({ page, context }) => {
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Offline Swift');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await page.getByRole('button', { name: 'Run the page' }).click();
+  await context.setOffline(true);
+  await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+  await expect(page.getByText('You are offline. Editing and preview still work.')).toBeVisible();
+  await page.getByLabel('HTML code').fill('<main><h1>Offline preview changed</h1></main>');
+  await page.getByRole('button', { name: 'Run the page' }).click();
+  await expect(page.frameLocator('#result-frame').getByRole('heading', { name: 'Offline preview changed' })).toBeVisible();
+  await expect(page.getByText('Preview ran. Reconnect, then run again to update progress.')).toBeVisible();
+  await context.setOffline(false);
 });
 
 test('@claim:free-capacity demo API reports the free 10 learner limit', async ({ request }) => {
@@ -121,6 +234,30 @@ test('@claim:paid-checkout uses the Sociobot hosted purchase and restore contrac
   await page.getByRole('button', { name: 'Verify license' }).click();
   await expect(page.getByText('Room Plus is active. New rooms allow 30 learners.')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('sb_license:lesson-code-room'))).toBe('test-room-plus-token');
+  expect(JSON.parse(await page.evaluate(() => localStorage.getItem('sb_license_verdict:lesson-code-room')) ?? '{}')).toEqual(expect.objectContaining({ valid: true }));
+});
+
+test('every annotated visitor claim is inventoried and every inventory id is published', async ({ page }) => {
+  const claims = JSON.parse(await readFile('.factory/claims.json', 'utf8')) as Array<{ id: string }>;
+  const inventory = new Set(claims.map((claim) => claim.id));
+  const published = new Set<string>();
+  const collect = async () => {
+    const annotations = await page.locator('[data-claim]').evaluateAll((elements) => elements.flatMap((element) => (element.getAttribute('data-claim') ?? '').split(/\s+/).filter(Boolean)));
+    for (const id of annotations) {
+      expect(inventory.has(id), `${page.url()} publishes unlisted claim ${id}`).toBe(true);
+      published.add(id);
+    }
+  };
+  for (const route of ['/', '/privacy', '/terms', '/demo']) {
+    await page.goto(route);
+    await collect();
+  }
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Claims Robin');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  await collect();
+  for (const id of inventory) expect(published.has(id), `claim ${id} is not attached to published copy`).toBe(true);
 });
 
 test('landing, demo, and legal pages have no serious accessibility findings', async ({ page }) => {

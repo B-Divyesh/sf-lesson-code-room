@@ -19,7 +19,7 @@ export interface Participant {
 }
 
 export interface Progress {
-  participants: Participant[];
+  participants: Array<Pick<Participant, 'name' | 'status'>>;
   counts: { joined: number; ran: number; done: number };
 }
 
@@ -45,4 +45,3 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   }
   return data as T;
 }
-

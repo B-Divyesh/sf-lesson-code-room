@@ -7,6 +7,13 @@
     "sandbox": "fresh browser context opened at /demo; join through its learner link and run the page"
   },
   {
+    "id": "custom-room",
+    "claim": "Teachers can create a room with custom HTML, CSS, and JavaScript that each learner receives as an editable copy.",
+    "where": "landing creator",
+    "test": "npm test -- --grep @claim:custom-room",
+    "sandbox": "fresh landing page; replace the starter HTML, create a room, join from a second page, and assert the editable copy"
+  },
+  {
     "id": "sandbox-run",
     "claim": "Editable HTML, CSS, and JavaScript run in a network-blocked browser sandbox.",
     "where": "creator and learner workbench",
@@ -22,10 +29,45 @@
   },
   {
     "id": "privacy-code",
-    "claim": "Learner edits stay in the learner's browser.",
-    "where": "landing privacy section and /privacy",
+    "claim": "Learner edits stay in the learner's browser and are absent from progress updates.",
+    "where": "/privacy",
     "test": "npm test -- --grep @claim:privacy-code",
     "sandbox": "fresh /demo learner; insert a unique code marker and assert it is absent from the progress request"
+  },
+  {
+    "id": "teacher-report-limits",
+    "claim": "Teacher reports contain screen names and Joined, Ran code, or Done states, with no grades or detailed activity.",
+    "where": "landing surveillance section",
+    "test": "npm test -- --grep @claim:teacher-report-limits",
+    "sandbox": "fresh demo room; join and run, then inspect the teacher progress response fields and allowed states"
+  },
+  {
+    "id": "product-scope",
+    "claim": "The workbench runs HTML, CSS, and JavaScript, with no repository import or video-call controls and camera and microphone blocked.",
+    "where": "landing limits, learner workbench, and /privacy",
+    "test": "npm test -- --grep @claim:product-scope",
+    "sandbox": "fresh /demo learner; inspect available editor tabs, controls, media elements, file inputs, and response permissions policy"
+  },
+  {
+    "id": "no-tracking",
+    "claim": "Lesson Code Room pages load no advertising trackers.",
+    "where": "/privacy",
+    "test": "npm test -- --grep @claim:no-tracking",
+    "sandbox": "fresh context; record every request through landing, privacy, demo, join, and run, and assert every origin is the product origin"
+  },
+  {
+    "id": "session-storage",
+    "claim": "A learner room key stays in the current browser tab and is not persistent browser storage.",
+    "where": "/privacy",
+    "test": "npm test -- --grep @claim:session-storage",
+    "sandbox": "fresh /demo learner; join, inspect session and local storage, then open the room in another tab"
+  },
+  {
+    "id": "offline-preview",
+    "claim": "After the workbench loads, editing and preview keep working while offline.",
+    "where": "learner workbench offline state",
+    "test": "npm test -- --grep @claim:offline-preview",
+    "sandbox": "fresh /demo learner; warm the preview, take the browser offline, edit HTML, run, and assert the changed preview"
   },
   {
     "id": "free-capacity",
@@ -50,9 +92,9 @@
   },
   {
     "id": "paid-checkout",
-    "claim": "Room Plus is a $29 one-time license that raises new rooms to 30 learners.",
-    "where": "landing paid section and /terms",
+    "claim": "Room Plus is a $29 one-time license that raises new rooms to 30 learners and uses Sociobot's hosted checkout.",
+    "where": "landing paid section, /privacy, and /terms",
     "test": "npm test -- --grep @claim:paid-checkout",
-    "sandbox": "fresh landing page; assert Sociobot checkout target and restore a license against a recorded valid response"
+    "sandbox": "fresh landing page; assert the Sociobot checkout target, restore against a recorded valid response, and inspect stored token and verdict"
   }
 ]

@@ -15,7 +15,7 @@ Try the isolated sample room: <https://lesson-code-room.sociobot.in/demo>
 - Let each learner edit, run, reset, and mark the exercise done.
 - See anonymous screen names move through three progress states.
 - Run learner code in a sandbox that blocks network requests.
-- Remove live rooms after their 24-hour expiry during server cleanup.
+- Expire live rooms after 24 hours and demo rooms after two hours.
 - Open temporary sample data through `/demo` without changing live rooms.
 - Restore a Room Plus license through Sociobot billing. Room Plus costs $29 once and raises new rooms to 30 learners.
 
@@ -68,7 +68,7 @@ The image runs as a non-root user, listens on `PORT` (default `8080`), and serve
 
 ## Data and security
 
-Room creation stores starter code, a random teacher token, and an expiry. Joining stores a chosen screen name and progress state. Learner edits are not sent in progress updates. The preview iframe has no same-origin permission, and its CSP blocks network, forms, media, fonts, and base URL changes.
+Room creation stores starter code, a random teacher token, and an expiry. Joining stores a chosen screen name and progress state. Learner edits are not sent in progress updates. Product pages load no advertising trackers. The preview iframe has no same-origin permission, and its CSP blocks network, forms, media, fonts, and base URL changes.
 
 All API routes except `/health` use a per-IP fixed-window limit and honor the first valid `X-Forwarded-For` address. The default limit is 40 requests per second and returns `429` with `Retry-After: 1`.
 

@@ -95,15 +95,15 @@ function landing(): void {
       <div class="hero-copy">
         <p class="eyebrow">One room. One exercise. Start teaching.</p>
         <h1>Run one coding exercise together</h1>
-        <p class="hero-lead">For remote teachers who need learners coding now, with clear progress and no student accounts.</p>
+        <p class="hero-lead" data-claim="anonymous-room">For remote teachers who need learners coding now, with clear progress and no student accounts.</p>
         <div class="hero-action">
           <a class="button button-primary" href="/demo" data-route>Try it with sample data</a>
           <span>A sample room opens with three learners.</span>
         </div>
         <ul class="plain-facts" aria-label="Key facts">
-          <li>No student accounts</li>
-          <li>Rooms close after 24 hours</li>
-          <li>Free for 10 learners</li>
+          <li data-claim="anonymous-room">No student accounts</li>
+          <li data-claim="room-retention">Rooms close after 24 hours</li>
+          <li data-claim="free-capacity">Free for 10 learners</li>
         </ul>
       </div>
       <figure class="hero-art">
@@ -119,7 +119,7 @@ function landing(): void {
       <div class="section-intro">
         <p class="eyebrow">The real first step</p>
         <h2 id="create-title">Set one exercise</h2>
-        <p>Use the starter or paste your own HTML, CSS, and JavaScript. Learners each get an editable copy.</p>
+        <p data-claim="custom-room">Use the starter or paste your own HTML, CSS, and JavaScript. Learners each get an editable copy.</p>
       </div>
       <form id="create-form" class="creator-form">
         <div class="form-grid">
@@ -129,7 +129,7 @@ function landing(): void {
         ${editorFields(starter)}
         <div class="form-end">
           <button class="button button-primary" type="submit">Create room and join link</button>
-          <p>Your room and starter code close after 24 hours.</p>
+          <p data-claim="room-retention">Your room and starter code close after 24 hours.</p>
         </div>
         <p id="create-error" class="form-error" role="alert"></p>
       </form>
@@ -142,8 +142,8 @@ function landing(): void {
       </div>
       <ol class="steps">
         <li><span>01</span><h3>Create the exercise</h3><p>Set one task and starter page before the call.</p></li>
-        <li><span>02</span><h3>Share one link</h3><p>Learners choose a screen name and start in their browser.</p></li>
-        <li><span>03</span><h3>Watch simple progress</h3><p>See who joined, ran code, or marked the task done.</p></li>
+        <li data-claim="anonymous-room"><span>02</span><h3>Share one link</h3><p>Learners choose a screen name and start in their browser.</p></li>
+        <li data-claim="anonymous-room"><span>03</span><h3>Watch simple progress</h3><p>See who joined, ran code, or marked the task done.</p></li>
       </ol>
     </section>
 
@@ -151,12 +151,12 @@ function landing(): void {
       <div>
         <p class="eyebrow">A room, not a watchtower</p>
         <h2 id="limits-title">Teach without surveillance</h2>
-        <p>Teachers see screen names and three progress states. They do not see typing, tabs, cameras, or private learner code.</p>
+        <p data-claim="teacher-report-limits">Teachers see screen names and three progress states. They do not get grades or detailed activity reports.</p>
       </div>
       <ul class="limits-list">
-        <li>Runs HTML, CSS, and JavaScript only</li>
-        <li>No grading or hidden activity reports</li>
-        <li>No repositories or video calls</li>
+        <li data-claim="product-scope">Runs HTML, CSS, and JavaScript only</li>
+        <li data-claim="teacher-report-limits">No automatic grading or detailed activity reports</li>
+        <li data-claim="product-scope">No repository imports or video calls</li>
       </ul>
     </section>
 
@@ -164,7 +164,7 @@ function landing(): void {
       <div>
         <p class="eyebrow">For larger tutoring groups</p>
         <h2 id="plus-title">Room Plus: $29 once</h2>
-        <p>Room Plus raises new rooms from 10 to 30 learners. The free room stays useful.</p>
+        <p data-claim="paid-checkout">Room Plus raises new rooms from 10 to 30 learners. Free rooms keep the 10-learner limit.</p>
       </div>
       <div class="license-panel">
         <a class="button button-primary" href="${BILLING_BASE}/api/v1/products/${PRODUCT}/checkout">Buy Room Plus</a>
@@ -173,7 +173,7 @@ function landing(): void {
           <label>License token<input name="license" autocomplete="off" required /></label>
           <button class="button button-secondary" type="submit">Verify license</button>
         </form>
-        <p id="license-status" class="small-note" role="status">One-time purchase. Sociobot is the merchant of record.</p>
+        <p id="license-status" class="small-note" role="status" data-claim="paid-checkout">One-time purchase. Sociobot hosts the checkout.</p>
       </div>
     </section>
   </main>`);
@@ -300,7 +300,7 @@ async function demoPage(): Promise<void> {
 }
 
 function demoBanner(): string {
-  return `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><div><button id="reset-demo" type="button">Reset demo</button><a href="/#create">Start for real</a></div></aside>`;
+  return `<aside class="demo-banner" aria-label="Demo mode" data-claim="demo-reset"><strong>Demo — sample data, nothing is saved</strong><div><button id="reset-demo" type="button">Reset demo</button><a href="/#create">Start for real</a></div></aside>`;
 }
 
 function bindDemoBanner(): void {
@@ -479,8 +479,8 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
         <button class="button button-quiet" id="reset-code" type="button">Reset starter code</button>
       </div>
     </section>
-    <div id="offline-note" class="offline-note" role="status" hidden>You are offline. Editing and preview still work. Reconnect, then run again to update progress.</div>
-    <section class="workbench" aria-label="Coding workbench">
+    <div id="offline-note" class="offline-note" role="status" data-claim="offline-preview" hidden>You are offline. Editing and preview still work. Reconnect, then run again to update progress.</div>
+    <section class="workbench" aria-label="Coding workbench" data-claim="sandbox-run">
       <div class="editor-pane">
         <div class="editor-tabs" role="tablist" aria-label="Code files">
           <button role="tab" aria-selected="true" aria-controls="html-editor" id="tab-html" data-tab="html">HTML</button>
@@ -583,10 +583,10 @@ function legalPage(kind: 'privacy' | 'terms'): void {
     setMeta('Privacy — Lesson Code Room', 'How Lesson Code Room stores short-lived room and learner progress data.', '/privacy');
     shell(`<main id="main" class="prose-page"><p class="eyebrow">Plain-language policy · 28 August 2026</p><h1>Privacy without a student account</h1>
       <h2>What the room stores</h2><p>A room stores its title, instructions, starter code, and a random teacher key. It also stores each learner’s chosen screen name and progress state.</p>
-      <h2>What stays in the browser</h2><p>Learner edits stay in that learner’s browser. Running code does not send those edits to our server. The current tab keeps its room key until the tab closes.</p>
-      <h2>When data is removed</h2><p>Live rooms expire after 24 hours. Demo rooms expire after two hours. Expired room data is deleted during normal server cleanup.</p>
-      <h2>Payments</h2><p>Sociobot is the merchant of record for Room Plus. This site stores a license token and its latest result in your browser. Payment card details never reach Lesson Code Room.</p>
-      <h2>What we do not collect</h2><p>We do not use advertising trackers. We do not collect student email addresses, cameras, keystrokes, open tabs, or code changes.</p>
+      <h2>What stays in the browser</h2><p data-claim="privacy-code session-storage">Learner edits stay in that learner’s browser. Progress updates do not send those edits. The current tab keeps its room key until the tab closes.</p>
+      <h2>When rooms expire</h2><p><span data-claim="room-retention">Live rooms expire after 24 hours.</span> <span data-claim="demo-retention">Demo rooms expire after two hours.</span></p>
+      <h2>Payments</h2><p data-claim="paid-checkout">Sociobot hosts the Room Plus checkout. This site stores the license token and its latest verification result in your browser.</p>
+      <h2>What pages do not load</h2><p><span data-claim="no-tracking">Lesson Code Room pages load no advertising trackers.</span> <span data-claim="product-scope">Camera and microphone access are blocked.</span></p>
       <h2>Questions</h2><p>Email <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with a room code if you need help.</p>
     </main>`);
   } else {
@@ -595,7 +595,7 @@ function legalPage(kind: 'privacy' | 'terms'): void {
       <h2>Use the room for teaching</h2><p>You may use the service for lawful HTML, CSS, and JavaScript lessons. Do not use it to harm systems, invade privacy, or monitor learners.</p>
       <h2>Keep the teacher link private</h2><p>Anyone with the teacher link can see learner screen names and progress. The teacher is responsible for sharing it carefully.</p>
       <h2>Short-lived service</h2><p>Rooms are temporary and may be removed after they expire. Keep your own copy of starter code that matters.</p>
-      <h2>Room Plus</h2><p>Room Plus costs $29 as a one-time purchase and raises the room limit to 30 learners. Sociobot is the merchant of record. Its checkout handles receipts and refunds. A refunded or revoked license stops opening larger rooms.</p>
+      <h2>Room Plus</h2><p data-claim="paid-checkout">Room Plus costs $29 once and raises new rooms to 30 learners. Sociobot hosts checkout and verifies the license.</p>
       <h2>Service limits</h2><p>The service is provided without a promise of uninterrupted access. We may block abuse or unsafe use.</p>
     </main>`);
   }

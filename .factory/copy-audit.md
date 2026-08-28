@@ -35,18 +35,18 @@ Audit date: 2026-08-28. Counts split on whitespace. Code samples are sample data
 | A room, not a watchtower | 5 | Pass |
 | Teach without surveillance | 3 | Pass |
 | Teachers see screen names and three progress states. | 8 | Pass |
-| They do not see typing, tabs, cameras, or private learner code. | 11 | Pass |
+| They do not get grades or detailed activity reports. | 9 | Pass |
 | Runs HTML, CSS, and JavaScript only | 6 | Pass |
-| No grading or hidden activity reports | 6 | Pass |
-| No repositories or video calls | 5 | Pass |
+| No automatic grading or detailed activity reports | 6 | Pass |
+| No repository imports or video calls | 6 | Pass |
 | For larger tutoring groups | 4 | Pass |
 | Room Plus: $29 once | 4 | Pass |
 | Room Plus raises new rooms from 10 to 30 learners. | 10 | Pass |
-| The free room stays useful. | 5 | Pass |
+| Free rooms keep the 10-learner limit. | 6 | Pass |
 | Buy Room Plus | 3 | Pass |
 | Restore a license | 3 | Pass |
 | One-time purchase. | 2 | Pass |
-| Sociobot is the merchant of record. | 6 | Pass |
+| Sociobot hosts the checkout. | 4 | Pass |
 | One exercise room for the first minutes of a live lesson. | 11 | Pass |
 | Privacy | 1 | Pass |
 | Terms | 1 | Pass |
