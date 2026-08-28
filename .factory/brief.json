@@ -1,0 +1,12 @@
+{
+  "slug": "lesson-code-room",
+  "title": "Lesson Code Room",
+  "summary": "Run one shared coding exercise and see who has tried it.",
+  "user": "Teachers and tutors running live remote coding lessons who need one low-setup shared exercise space with visible learner progress.",
+  "smallest_useful_product": "Hosted room with a teacher-created HTML/CSS/JS exercise, one join link, browser sandbox, run/reset, and anonymous progress states.",
+  "success_measure": "A teacher can launch a room to 10 learners in under five minutes, and 80% run the starter exercise within two minutes of joining.",
+  "artifact_class": "web-with-backend",
+  "monetization": "freemium",
+  "constraints": "Strict iframe/CSP sandboxing, short retention, no student PII requirement, accessibility, and clear limits against using it for surveillance.",
+  "non_goals": ["Java or C++ execution", "grading", "proctoring", "repositories", "video conferencing"]
+}
