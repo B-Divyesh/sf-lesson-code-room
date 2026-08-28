@@ -31,7 +31,8 @@ Demo rooms use random room and teacher tokens and are marked `is_demo` in the ro
 4. Join with any screen name.
 5. Edit HTML or JavaScript and select **Run the page**.
 6. Confirm the result in the isolated preview.
-7. Return to the teacher page and confirm **Ran code**.
-8. Select **Reset demo** and confirm the room link changes.
+7. Edit all three files, select **Reset starter code**, accept the warning, and confirm the starter fields and preview return.
+8. Return to the teacher page and confirm **Ran code**.
+9. Select **Reset demo** and confirm the room link changes.
 
 The automated form of this path lives in `tests/product.spec.ts`.
