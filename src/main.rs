@@ -9,8 +9,8 @@ use std::{
 
 use axum::{
     body::Body,
-    extract::{ConnectInfo, Path as AxumPath, Query, Request, State},
-    http::{header, HeaderValue, StatusCode},
+    extract::{ConnectInfo, Path as AxumPath, Request, State},
+    http::{header, HeaderMap, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -61,6 +61,7 @@ impl IntoResponse for ApiError {
             "room_full" => StatusCode::CONFLICT,
             "forbidden" => StatusCode::FORBIDDEN,
             "expired" => StatusCode::GONE,
+            "server_error" => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::BAD_REQUEST,
         };
         (status, Json(self)).into_response()
@@ -130,11 +131,6 @@ struct ProgressUpdate {
     status: String,
 }
 
-#[derive(Deserialize)]
-struct TeacherQuery {
-    teacher_token: String,
-}
-
 #[derive(Serialize)]
 struct ProgressResponse {
     participants: Vec<Participant>,
@@ -197,6 +193,15 @@ async fn main() {
         .run(&db)
         .await
         .expect("run database migrations");
+    purge_expired(&db).await;
+    let cleanup_db = db.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(15 * 60));
+        loop {
+            interval.tick().await;
+            purge_expired(&cleanup_db).await;
+        }
+    });
     let state = AppState {
         db,
         rate: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
@@ -355,11 +360,15 @@ async fn update_progress(
 async fn get_progress(
     State(state): State<AppState>,
     AxumPath(id): AxumPath<String>,
-    Query(query): Query<TeacherQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<ProgressResponse>, ApiError> {
     let room_id = normalize_room_id(&id);
     let expected = get_teacher_token(&state.db, &room_id).await?;
-    if !constant_time_eq(expected.as_bytes(), query.teacher_token.as_bytes()) {
+    let supplied = headers
+        .get("x-teacher-token")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default();
+    if !constant_time_eq(expected.as_bytes(), supplied.as_bytes()) {
         return Err(api_error(
             "forbidden",
             "The teacher link is not valid for this room.",
