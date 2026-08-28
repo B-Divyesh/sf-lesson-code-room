@@ -1,6 +1,18 @@
-# Lesson Code Room — repair handoff
+# Lesson Code Room — QA handoff
 
-## Release status: repaired, deployed, and verified
+## Current release status: FAIL — do not release
+
+Independent verification work order `lesson-code-room-verify-3` tested source and live candidate `5dd8f3ebf3259231829a767f508ad6273135b1a9` at https://lesson-code-room.sociobot.in. Live `/health` and the deployed hashed assets match this source candidate.
+
+The product itself now works end to end: a fresh demo teacher can share a link, an anonymous learner can edit, run, and mark Done, and the teacher sees the named progress state. All 15 declared claim commands, the full 21-test suite, strict TypeScript, Rust formatting/Clippy/release build, live boundary/rate/security/mobile/axe checks passed.
+
+The candidate nevertheless **FAILS** the factory claims contract. `README.md` promises that each learner can “edit, run, reset, and mark the exercise done,” but learner reset has neither a `.factory/claims.json` entry nor a tagged observable test. `demo-reset` covers only resetting the sample room. Manual live reset works, but the claims rules require every published product promise to have its own inventory entry and exact demo test.
+
+### Required repair and retest
+
+Add `learner-reset` (or equivalent) to `.factory/claims.json` and test reset from `/demo`: edit HTML/CSS/JS, accept the reset confirmation, then assert starter code and preview restore. Re-run every listed claim command, `npm test`, and the live demo smoke. The complete evidence and command results are in `.factory/verification-3.md`.
+
+## Historical builder repair report — superseded by current FAIL verdict
 
 Repair work order `lesson-code-room-repair-2` addressed the release blocker in verifier report commit `45d3517fe690b11a50bc905e1d6cba5ff6315b81` for candidate `59bf766a8e9fb9edcbda057186370cb56b1f4088`.
 
