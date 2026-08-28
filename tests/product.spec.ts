@@ -90,6 +90,54 @@ test('@claim:demo-reset reset creates isolated temporary sample data', async ({ 
   expect((await request.get(`/api/rooms/${liveRoom.id}`)).ok()).toBeTruthy();
 });
 
+test('@claim:learner-reset restores all starter files and the rendered preview', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/demo');
+  const joinUrl = await page.getByLabel('Learner join link').inputValue();
+  await page.goto(joinUrl);
+  await page.getByLabel('Screen name').fill('Reset Starling');
+  await page.getByRole('button', { name: 'Join the exercise' }).click();
+
+  const html = page.getByLabel('HTML code');
+  const css = page.getByLabel('CSS code');
+  const javascript = page.getByLabel('JavaScript code');
+  const original = {
+    html: await html.inputValue(),
+    css: await css.inputValue(),
+    javascript: await javascript.inputValue(),
+  };
+
+  await html.fill('<main><h1>Edited learner page</h1><p id="edited-output"></p></main>');
+  await page.getByRole('tab', { name: 'CSS' }).click();
+  await css.fill('body { background: rgb(255, 0, 0); color: white; }');
+  await page.getByRole('tab', { name: 'JavaScript' }).click();
+  await javascript.fill("document.querySelector('#edited-output').textContent = 'Edited script ran';");
+  await page.getByRole('button', { name: 'Run the page' }).click();
+  const preview = page.frameLocator('#result-frame');
+  await expect(preview.getByRole('heading', { name: 'Edited learner page' })).toBeVisible();
+  await expect(preview.getByText('Edited script ran')).toBeVisible();
+  await expect.poll(() => preview.locator('body').evaluate((body) => getComputedStyle(body).backgroundColor)).toBe('rgb(255, 0, 0)');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toBe('Reset all three files to the teacher’s starter code? Your edits will be replaced.');
+    await dialog.accept();
+  });
+  const reset = page.getByRole('button', { name: 'Reset starter code' });
+  await reset.focus();
+  await expect(reset).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(html).toHaveValue(original.html);
+  await expect(css).toHaveValue(original.css);
+  await expect(javascript).toHaveValue(original.javascript);
+  await expect(page.getByText('Starter code restored')).toBeVisible();
+  await expect(preview.getByRole('heading', { name: 'Good evening, coders.' })).toBeVisible();
+  await expect.poll(() => preview.locator('body').evaluate((body) => getComputedStyle(body).backgroundColor)).toBe('rgb(7, 21, 31)');
+  await preview.getByRole('button', { name: 'Send a signal' }).click();
+  await expect(preview.getByText('Signal received.')).toBeVisible();
+});
+
 test('@claim:privacy-code learner edits are not sent in progress updates', async ({ page }) => {
   await page.goto('/demo');
   const joinUrl = await page.getByLabel('Learner join link').inputValue();

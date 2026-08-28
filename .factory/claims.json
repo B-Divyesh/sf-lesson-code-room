@@ -28,6 +28,13 @@
     "sandbox": "fresh /demo; reset and compare room links while checking seeded learners"
   },
   {
+    "id": "learner-reset",
+    "claim": "A learner can reset all three edited files and the preview to the teacher's starter code.",
+    "where": "README and learner workbench",
+    "test": "npm test -- --grep @claim:learner-reset",
+    "sandbox": "fresh /demo learner; edit HTML, CSS, and JavaScript, run the changed page, accept reset, then assert all starter fields and the starter preview are restored"
+  },
+  {
     "id": "privacy-code",
     "claim": "Learner edits stay in the learner's browser and are absent from progress updates.",
     "where": "/privacy",

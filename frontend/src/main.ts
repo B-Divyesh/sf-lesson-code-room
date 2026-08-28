@@ -476,7 +476,7 @@ function renderWorkbench(room: Room, learnerToken: string, name: string): void {
       <div class="workbench-actions">
         <button class="button button-primary" id="run-code" type="button">Run the page</button>
         <button class="button button-secondary" id="mark-done" type="button">Mark as done</button>
-        <button class="button button-quiet" id="reset-code" type="button">Reset starter code</button>
+        <button class="button button-quiet" id="reset-code" type="button" data-claim="learner-reset">Reset starter code</button>
       </div>
     </section>
     <div id="offline-note" class="offline-note" role="status" data-claim="offline-preview" hidden>You are offline. Editing and preview still work. Reconnect, then run again to update progress.</div>
