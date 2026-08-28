@@ -1,6 +1,6 @@
 # Lesson Code Room — repair handoff
 
-## Release status: ready for deployment verification
+## Release status: deployed and verified
 
 This repair addresses every finding in the independent report for candidate `a8a428aa8dc523f7efaeb5ee32d9d81d1dc9ed9b`.
 
@@ -28,6 +28,15 @@ This repair addresses every finding in the independent report for candidate `a8a
 
 Docker is not installed in this worker image, so the container build is verified by the factory ACR deployment step.
 
-## Deployment retest
+## Deployment verification
 
-After deployment, open `/demo` in one fresh browser context and its learner link in another. Join, run the sample, mark Done, and confirm the teacher sees it. Also verify the live health build identity, immutable asset cache header, mobile/axe scan, and rate limit. The deployment evidence will be appended after that check.
+Deployed product revision: `a17b63ff3c3523bb7fbdbcfefa7e618ddfeac1b0` at `https://lesson-code-room.sociobot.in`.
+
+- `GET /health` returned the deployed revision SHA and `{ "ok": true }`.
+- In two fresh Playwright browser contexts, `/demo` created room `QLAYQM`; its learner link opened successfully, `Live Replica Finch` joined and ran the sample, and the independent teacher context observed that learner's progress. This is the production reproduction of the former P0 path.
+- The factory verifier URL check on the live container endpoint found a 200 response, no console errors, `lang="en"`, one title, one `h1`, a `main` landmark, and no missing image alt text or unnamed buttons.
+- Live 390px browser check: `scrollWidth` was exactly 390; the first Tab focused **Skip to main content**; axe reported no serious or critical violations.
+- Live `HEAD /assets/index-BBeU5N0A.js` returned `Cache-Control: public, max-age=31536000, immutable` plus the expected CSP, nosniff, and referrer headers.
+- Live 48-request `POST /api/demo` burst with one forwarded IP returned 40×200 and 8×429; every 429 included `Retry-After: 1`.
+
+No known release-blocking gaps remain. Docker itself is unavailable in the worker, but ACR built the deployed image successfully.
