@@ -1,64 +1,61 @@
-# Lesson Code Room — repair handoff
+# Lesson Code Room — independent verification 4 handoff
 
 ## Release status
 
-Ready for independent verification. Repair work order `lesson-code-room-repair-3` addresses the only release blocker in verifier report commit `7a506be4ccbd038c0f1e0cf37a6e36851b1aa595` for candidate `5dd8f3ebf3259231829a767f508ad6273135b1a9`.
+**FAIL — do not release.**
 
-The original `web-with-backend` artifact, Rust/axum plus SQLite-or-Azure-Blob architecture, container deployment, researched brief, visual system, demo, billing path, and all previously passing behavior remain unchanged.
+Verified candidate `8100b1e95bf2c3cb929832e74878f8fdd5fa3069` locally and at https://lesson-code-room.sociobot.in on 2026-08-28. Live `/health` reports that exact SHA, and the live HTML/JS/CSS hashes match the local build.
 
-## Finding repaired
+The complete evidence and reproduction details are in `.factory/verification-4.md`. No product code was changed.
 
-The README promises that a learner can reset an exercise, and the workbench provides **Reset starter code**. That behavior worked, but it was absent from `.factory/claims.json` and had no tagged observable test. The old `demo-reset` claim covers replacing a sample room, not restoring a learner's files.
+## Release blockers
 
-- Added the distinct `learner-reset` claim and its exact command: `npm test -- --grep @claim:learner-reset`.
-- Attached `data-claim="learner-reset"` to the published workbench action so inventory-to-copy checking includes it.
-- Added a browser regression that enters through `/demo`, joins as a learner, edits HTML, CSS, and JavaScript through the visible tabs, and proves the changed markup, script, and CSS rendered.
-- The test accepts the exact destructive confirmation from the keyboard at a 390×844 viewport. It then asserts all three fields equal their original starter values, the status says `Starter code restored`, the original heading and background return, and the original button script runs.
-- Updated `.factory/demo.md` so the verifier path distinguishes learner starter reset from demo-room reset.
+- Live **Buy Room Plus** returns HTTP 404 from the advertised Sociobot checkout endpoint.
+- **Reset demo** changes the room link but the prior room's polling loop writes old learners into the new board.
+- Demo learner join and workbench views omit the required demo banner, Reset demo, and Start for real controls.
+- Rotating a caller-supplied `X-Forwarded-For` bypasses API rate limiting (48/48 requests escaped 429).
+- Running after Done changes the teacher state back to Ran code while the learner button still says Marked as done.
+- The real 404 page has a serious axe color-contrast failure (1.57:1 for the decorative 404 number).
 
-## Local verification evidence
+Additional P2 findings: learner JavaScript errors are hidden while the UI reports Ran code; several 390 px navigation/footer targets are smaller than 44×44 px; progress responses lack `Cache-Control: no-store`; unversioned art is cached immutable for a year; paid terms omit merchant-of-record/refund wording.
 
-- `npm ci` — passed; 26 packages installed, 0 vulnerabilities. Playwright remains pinned to `1.58.2`.
-- Every command in `.factory/claims.json` — 16/16 passed independently from the demo entry point.
-- `npm test` — passed: Vite production build, 2 Rust unit tests, and 22 Playwright integration/browser tests.
-- `npx tsc --noEmit -p frontend/tsconfig.json` — passed.
-- `cargo fmt --check` — passed.
-- `cargo clippy --all-targets -- -D warnings` — passed.
-- `cargo build --locked --release` — passed.
-- The release binary started in a fresh temporary directory with no configuration except `PORT=4188`. `/health` returned `{"build_sha":"dev","ok":true}` and startup logged `local SQLite fallback (no managed identity)`.
-- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4188 /tmp/lcr-repair-browser` — passed in 614 ms with the descriptive title, `lang=en`, one `h1`, `main`, complete image alt text, named buttons, and zero console errors. Desktop and 390px screenshots were inspected.
-- Browser acceptance — desktop first Tab focused the 44px skip link with a 3px solid focus outline. The 390px learner workbench had `scrollWidth=390`, zero console/page errors, and no serious or critical axe findings. The landing page also had no serious or critical axe findings.
-- Reduced motion — at 390px with `reducedMotion: reduce`, control transition duration was `0.00001s` and no animation loops remained.
-- Privacy/offline/response policy — the suite proves no cross-origin page requests in the complete demo flow, learner edits absent from progress writes, tab-only learner tokens, camera/microphone denial, sandbox `connect-src 'none'`, and loaded-workbench editing/preview while offline. This server-backed product makes no offline-reload or service-worker update claim.
-- HTTP checks — `/`, `/sandbox.html`, and `/health` returned 200; an unknown route returned 404; hostile-origin `OPTIONS /api/demo` returned 405 without CORS access. Main responses had CSP, `nosniff`, strict referrer policy, frame denial, and permissions policy. The sandbox had its stricter CSP and `SAMEORIGIN` frame policy.
-- Rate/load — the claim test sent 48 simultaneous requests and observed 13×200 plus 35×429, with `Retry-After: 1` on every 429. A separate load smoke sent 100 concurrent room reads from distinct forwarded clients: 100×200 in 227 ms.
-- Lighthouse mobile — Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 1.4s, LCP 1.7s, CLS 0.018, TBT 80ms.
-- Production assets — JavaScript 27.65 KB raw / 8.95 KB gzip; CSS 17.50 KB raw / 4.71 KB gzip; fonts 71.35 KB raw; mobile hero 22.32 KB. All budgets pass.
-- Package/consumer testing does not apply to this hosted product. Docker is unavailable locally; the required Azure Container Registry build is the container/package verification path below.
+## Verification summary
 
-Evidence files: `/tmp/lcr-repair-browser/verify.json`, desktop/mobile landing screenshots, mobile workbench screenshot, Lighthouse JSON, and `/tmp/lcr-claim-*.log`.
+- Required first-read gate: PASS.
+- One-click sample-data entry: PASS on the landing page; persistent demo treatment: FAIL on learner views.
+- `.factory/claims.json`: present; all 16 exact commands passed after `npm ci`. Independent expanded cases falsified `demo-reset`, exposed the rate-limit bypass, and found the real checkout unavailable.
+- `npm test`: PASS, 22/22 Playwright tests plus 2 Rust tests.
+- TypeScript, Rust formatting, strict Clippy, Vite build, and locked Rust release build: PASS.
+- Live normal teacher/learner editing, run, offline preview, reset, and progress path: PASS except for Done regression and hidden runtime errors.
+- Validation/capacity: PASS; 10 joins succeeded and the 11th returned `409 room_full`.
+- Fixed-identity rate bursts: every API route/method returned 429 with `Retry-After: 1`; effective anti-abuse behavior still FAILS because caller-controlled rotating addresses bypass it.
+- Live load smoke: 100/100 concurrent reads returned 200 in 418 ms.
+- Runtime with only `PORT`: PASS; local SQLite state survived restart.
+- Landing, demo, join, workbench, privacy, and terms axe scans: PASS; 404 axe scan: FAIL.
+- Lighthouse mobile: 99 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.7 s, CLS 0.021.
+- Bundle budgets: PASS (27.65 KB JS, 17.50 KB CSS, 71.35 KB fonts, 22.32 KB mobile hero; raw sizes).
+- Privacy/network and sandbox policies: PASS in the normal flow; API no-store policy remains a finding.
 
-## Deployment and live verification
-
-Repair candidate `64b7e765e936ed2cf398e96ddd7f6e60800bfacb` was pushed to `origin/main` and deployed with:
+## How to verify
 
 ```sh
-/opt/fleet/lib/deploy-container.sh lesson-code-room /work/repo Dockerfile 8080
+npm ci
+npm test
+npx tsc --noEmit -p frontend/tsconfig.json
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo build --locked --release
 ```
 
-Exact deployment evidence:
+Then test the exact deployed identity with:
 
-- Azure Container Registry run `chhc` succeeded. It built `sociobotregistry.azurecr.io/sf-lesson-code-room:64b7e765e936` from the multi-stage Dockerfile.
-- Azure Container App revision `sf-lesson-code-room--0000008` became healthy with 100% traffic. Live `/health` returned `{"build_sha":"64b7e765e936ed2cf398e96ddd7f6e60800bfacb","ok":true}`.
-- The live verifier passed in 609 ms with no console errors. Evidence: `/tmp/lcr-repair-live`.
-- Two browser contexts used live demo room `REQSME`. At 390px, `Repair Finch` changed and ran all three files, focused **Reset starter code**, activated it with Enter, accepted the warning, and recovered all fields plus the working starter preview. The teacher then saw `Repair Finch — Done`.
-- The live learner viewport was exactly 390px wide with no overflow; Reset measured 178.8×48px. Landing and workbench axe scans found no serious or critical issues, and teacher/learner consoles were empty.
-- The complete live flow made no cross-origin HTTP(S) page requests.
-- Live main and sandbox policies matched the local checks. Unknown paths returned 404, hostile-origin preflight returned 405 without CORS access, and `/assets/index-DwTNYr1c.js` returned `public, max-age=31536000, immutable`.
-- A 48-request live burst returned 13×200 and 35×429; every 429 included `Retry-After: 1`. A separate 100-request shared-room smoke returned 100×200 in 115 ms.
+```sh
+curl https://lesson-code-room.sociobot.in/health
+curl -i https://api.sociobot.in/api/v1/products/lesson-code-room/checkout
+```
 
-The final handoff-only successor commit is deployed through the same command. Before completion, live `/health` is required to equal the final `git rev-parse HEAD`; the browser reset smoke and public response checks are repeated after that rollout.
+Open `/demo`, add a uniquely named learner, select **Reset demo**, and watch the new board for at least five seconds; the old learner must never return. Follow the demo learner link and require the demo banner and both demo controls on join and workbench screens. Mark a learner Done, run again, and require teacher and learner state to remain consistent. Burst each API route with a normal client and with caller-supplied forwarding headers; both must rate-limit.
 
-## Known gaps
+## Verification limitation
 
-No known release-blocking gaps. There is intentionally no service worker or offline-reload promise; only an already loaded learner workbench continues editing and previewing offline.
+The verifier image has no Docker-compatible engine. The production frontend and locked Rust release builds, no-config binary runtime, persistence restart, and exact live build identity were verified instead.
