@@ -1,35 +1,30 @@
-# Lesson Code Room — repair 4 handoff
+# Lesson Code Room — verification 4 handoff
 
-Date: 2026-08-28  
-Base verified: `8100b1e95bf2c3cb929832e74878f8fdd5fa3069`
+## Candidate result
 
-## Repaired
+**FAIL — do not release `8100b1e95bf2c3cb929832e74878f8fdd5fa3069`.** This document records verification of that candidate only; a later repair commit exists on `main` and is not accepted by this report.
 
-- Registered the live $29 Room Plus product with Sociobot billing; its hosted checkout now returns HTTP 303.
-- Demo reset now cancels the previous room poll; demo identity, reset, and exit controls persist on demo join and workbench views.
-- Progress is monotonic: Done cannot revert to Ran code in SQLite or shared Blob storage.
-- The limiter uses the ingress-appended rightmost forwarded address, expires old windows, and caps key storage. API responses are `Cache-Control: no-store`; only hashed assets are immutable.
-- Fixed the 404 contrast, 390 px touch targets, paid merchant/refund terms, and learner-visible sandbox runtime errors.
+The complete evidence is in `.factory/verification-4.md`. No product source was changed.
 
-## Verification
+## Blockers
 
-- Clean install: `npm ci` — passed (26 packages, 0 vulnerabilities).
-- `npm test` — passed: 3 Rust tests and 30 Playwright tests, including all 16 declared claims and new regressions for every verifier finding.
-- The paid checkout claim follows the real Sociobot checkout endpoint and asserts its redirect.
-- `npm run build` — passed; JS 28.59 KB raw / 9.32 KB gzip, CSS 17.74 KB raw / 4.73 KB gzip.
-- `npx tsc --noEmit -p frontend/tsconfig.json`, `cargo fmt --all -- --check`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo build --locked --release` passed before the final frontend-only regression adjustment; `npm test` passed after it.
-- Playwright covers desktop, 390 px mobile, keyboard tabs, offline preview/update recovery, privacy request scope, 404 axe, and sandbox error recovery. No serious or critical axe findings remain.
+- Candidate demo learner views omit the required persistent sample-data banner, Reset demo, and Start for real controls.
+- Candidate 404 has a serious axe color-contrast finding on `.door-number`.
+- The live deployment changed during QA from the requested candidate to `2f1abc3924bd1d7fefef9530757b4173c9e093de`.
 
-## Run
+## Passing checks
+
+All 16 claim commands, `npm test`, typecheck, Rust format, strict Clippy, locked release build, no-config runtime, normal 390 px journey, keyboard/reduced-motion checks, normal privacy/sandbox checks, fixed-identity rate-limit burst, concurrent reads, and bundle budgets passed.
+
+## Retest
 
 ```sh
-npm ci
+npm install
 npm test
-PORT=8080 cargo run
+npx tsc --noEmit -p frontend/tsconfig.json
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo build --locked --release
 ```
 
-The container still starts with only `PORT`; managed identity selects shared Blob storage in Azure and local SQLite remains the no-config developer fallback.
-
-## Remaining
-
-No known release blockers. Docker/Lighthouse were not rerun locally in this repair container; the production build, browser/a11y suite, and release binary checks are recorded above. Deployment identity and live smoke evidence are appended after deployment.
+Then verify the stable deployed SHA and matching assets, require the banner and controls after following a `/demo` learner link, and run axe against a real unknown route.
