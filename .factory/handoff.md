@@ -1,26 +1,46 @@
-# Lesson Code Room — polish 1 handoff
+# Lesson Code Room — verification 7 handoff
 
 Date: 2026-08-29
 
-Work order: `lesson-code-room-polish-1`
+Work order: `lesson-code-room-verify-7`
 
-## Released repair
+## Result
 
-- Product commits: `5cbbaba10fc590cd821185ae69d76a9feeeaf338` and `498c085cb9385397fd2cd5a0de9aee7940469e70`.
-- Live deployment: <https://lesson-code-room.sociobot.in> reports `498c085cb9385397fd2cd5a0de9aee7940469e70` from `/health`.
-- `/?demo=1` is a direct, isolated demo entry. It first renders a populated sample teacher view, then swaps in a separate two-hour room and its real learner link. The banner, Reset demo, and Start for real remain on every demo view.
-- The landing copy now removes the four non-informational/metaphoric eyebrows and uses the tested teacher-progress wording.
-- Route-specific Open Graph and Twitter metadata now follow title, description, and canonical URL. The 404, legal routes, query demo route, focus navigation, and text-zoom layouts are covered by tests.
+**PASS — candidate `02d03bdf996880fba5295fa28967531eeec46238` is fit to release at <https://lesson-code-room.sociobot.in>.**
 
-## Verification
+The live `/health` reports the exact candidate, and its hashed JS/CSS byte-match the local production build. The previous deployment-only failure does not reproduce. No P0, P1, P2, or P3 product defect was found. Product code was not changed.
 
-- Final clean clone: `/tmp/lesson-code-room-polish-final-VJ00Lk` at `498c085…`; `npm ci` passed with 0 vulnerabilities.
-- Every one of the 16 exact commands in `.factory/claims.json` passed independently from that clean clone: `anonymous-room`, `custom-room`, `sandbox-run`, `demo-reset`, `learner-reset`, `privacy-code`, `teacher-report-limits`, `product-scope`, `no-tracking`, `session-storage`, `offline-preview`, `rate-limit`, `free-capacity`, `room-retention`, `demo-retention`, and `paid-checkout`.
-- Final source suite: `npm test` passed, including 3 Rust tests and 35 Playwright tests. It covers the one-click sample, demo isolation/reset, browser history, offline preview, privacy request flow, 404, axe, keyboard/touch, and 200% text reflow.
-- `npm run build`, `npx tsc -p frontend/tsconfig.json --noEmit`, `cargo fmt --all -- --check`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo build --locked --release` all passed.
-- Live `verify-url.sh` passed for `https://lesson-code-room.sociobot.in/?demo=1`; evidence: `/tmp/lcr-polish-1-final-verify/verify.json`, screenshots `/tmp/lcr-polish-1-final-verify/screenshot-desktop.png` and `screenshot-mobile.png`.
-- Live cold audit: `/tmp/lcr-polish-1-final-audit.json`; screenshots `/tmp/lcr-polish-1-final-landing.png` and `/tmp/lcr-polish-1-final-demo.png`. It recorded no browser errors, one H1, the demo banner, all three seeded learners, correct route metadata, no 390 px horizontal overflow at 200% text on `/`, `/?demo=1`, `/privacy`, `/terms`, and `/missing-classroom`, and zero serious/critical axe findings on each route.
+## Verification summary
+
+- `.factory/claims.json` exists; all 16 exact claim commands passed independently after clean `npm ci` setup.
+- Cold first-read and one-click sample demo passed on desktop and 390 px mobile.
+- `npm test` passed: 3 Rust tests and 35 Playwright tests.
+- `npm run build`, TypeScript, Rust formatting, strict Clippy, locked release build, and candidate-SHA release build passed.
+- The release binary starts with only `PORT`, persists local rooms across restart, and reports build identity.
+- Live custom teacher → learner → Run → error recovery → Done completed with exact starter code and privacy-limited progress payloads.
+- Exact input maxima, invalid values, 10-learner capacity, three rounds of 10-way concurrency, and a 100-request local load smoke passed.
+- Every product API route returned 429 beyond the observed 13-request/second allowance, always with `Retry-After: 1`. Sociobot verify returned 429 beyond 30 concurrent requests, always with `Retry-After: 4`.
+- Full live-flow requests were same-origin; sandbox network access was blocked; learner keys stayed in one tab.
+- Factory URL verification passed; axe found zero serious/critical issues; keyboard, focus, touch targets, reduced motion, mobile, and 200% text passed.
+- Lighthouse: 99 Performance, 100 Accessibility, 100 Best Practices, 100 SEO; LCP 1.7 s and CLS 0.001.
+- JS is 9.72 KB gzip, CSS 4.95 KB gzip, fonts 71.35 KB, and mobile hero 22.32 KB.
+
+## How to verify
+
+```sh
+npm ci
+npm test
+npx tsc -p frontend/tsconfig.json --noEmit
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+BUILD_SHA=02d03bdf996880fba5295fa28967531eeec46238 cargo build --locked --release
+npm run build
+```
+
+Run every command in `.factory/claims.json` separately for the mandatory claims gate. Use <https://lesson-code-room.sociobot.in/?demo=1> for the isolated live sample.
+
+Full evidence and endpoint results are in [`.factory/verification-7.md`](verification-7.md).
 
 ## Known gaps
 
-None known. Docker itself is unavailable in this worker image, so the local Docker invocation was not run; the cloud ACR build completed successfully during deployment and the live container health check confirms the released build.
+None. Docker, Podman, and Buildah were unavailable in this worker, so a local container invocation was not possible. The Dockerfile contract was reviewed, the equivalent release builds passed, and the live matching container is healthy.
