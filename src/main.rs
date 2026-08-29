@@ -1080,7 +1080,7 @@ async fn insert_room(
     match store {
         Store::Sqlite(db) => insert_room_sqlite(db, input, licensed, demo).await,
         Store::Blob(blob) => {
-            let id = unique_room_id_blob(blob).await?;
+            let id = unique_room_id_blob(blob, demo).await?;
             let now = unix_time();
             let room = PublicRoom {
                 id: id.clone(),
@@ -1163,15 +1163,10 @@ async fn get_teacher_token(store: &Store, id: &str) -> Result<String, ApiError> 
     }
 }
 
-async fn unique_room_id_blob(blob: &BlobStore) -> Result<String, ApiError> {
-    const LETTERS: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ";
+async fn unique_room_id_blob(blob: &BlobStore, demo: bool) -> Result<String, ApiError> {
     for _ in 0..8 {
-        let mut bytes = [0u8; 6];
-        rand::rng().fill_bytes(&mut bytes);
-        let id: String = bytes
-            .iter()
-            .map(|value| LETTERS[*value as usize % LETTERS.len()] as char)
-            .collect();
+        let code = random_room_code();
+        let id = if demo { format!("DEMO-{code}") } else { code };
         if blob
             .get::<StoredRoom>(&room_blob_path(&id))
             .await?
@@ -1318,7 +1313,7 @@ async fn insert_room_sqlite(
     licensed: bool,
     demo: bool,
 ) -> Result<PublicRoom, ApiError> {
-    let id = unique_room_id_sqlite(db).await?;
+    let id = unique_room_id_sqlite(db, demo).await?;
     let teacher_token = random_token(32);
     let now = unix_time();
     let ttl = if demo {
@@ -1371,15 +1366,10 @@ async fn get_teacher_token_sqlite(db: &SqlitePool, id: &str) -> Result<String, A
         .ok_or_else(|| api_error("not_found", "This room does not exist or has expired."))
 }
 
-async fn unique_room_id_sqlite(db: &SqlitePool) -> Result<String, ApiError> {
-    const LETTERS: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ";
+async fn unique_room_id_sqlite(db: &SqlitePool, demo: bool) -> Result<String, ApiError> {
     for _ in 0..8 {
-        let mut bytes = [0u8; 6];
-        rand::rng().fill_bytes(&mut bytes);
-        let id: String = bytes
-            .iter()
-            .map(|value| LETTERS[*value as usize % LETTERS.len()] as char)
-            .collect();
+        let code = random_room_code();
+        let id = if demo { format!("DEMO-{code}") } else { code };
         let exists: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM rooms WHERE id = ?")
             .bind(&id)
             .fetch_one(db)
