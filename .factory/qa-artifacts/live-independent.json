@@ -1,0 +1,182 @@
+{
+  "checkedAt": "2026-08-29T18:22:13.592Z",
+  "candidate": "19733649f2e9051c73a3e69e33096f54adfdb940",
+  "base": "https://lesson-code-room.sociobot.in",
+  "firstRead": {
+    "h1": "Run one coding exercise together",
+    "audience": "For remote teachers who need learners coding now, with clear progress and no student accounts.",
+    "action": "Try it with sample data",
+    "firstFocused": {
+      "text": "Skip to main content",
+      "outline": "rgb(255, 200, 87) solid 3px",
+      "rect": {
+        "x": 8,
+        "y": 8,
+        "width": 177,
+        "height": 44
+      }
+    },
+    "oneClickDemo": true,
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "endToEnd": {
+    "demoRoom": "DEMO-UXQUVP",
+    "seededLearners": [
+      "Moss Finch — Done",
+      "Blue Comet — Ran code",
+      "Quiet Fox — Joined"
+    ],
+    "learner": "QA Night Owl",
+    "ranPreview": true,
+    "teacherSawDone": true,
+    "offlinePreview": true,
+    "resetAllFiles": true,
+    "demoResetChangedRoom": true,
+    "demoStorage": {
+      "local": [],
+      "session": []
+    },
+    "learnerStorage": {
+      "local": [],
+      "session": [
+        "learner:DEMO-UXQUVP"
+      ]
+    }
+  },
+  "routes": {
+    "/": {
+      "status": 200,
+      "title": "Lesson Code Room — Run a shared coding exercise",
+      "reflow": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "seriousCritical": 0
+    },
+    "/demo": {
+      "status": 200,
+      "title": "Demo — Lesson Code Room",
+      "reflow": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "seriousCritical": 0
+    },
+    "/privacy": {
+      "status": 200,
+      "title": "Privacy — Lesson Code Room",
+      "reflow": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "seriousCritical": 0
+    },
+    "/terms": {
+      "status": 200,
+      "title": "Terms — Lesson Code Room",
+      "reflow": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "seriousCritical": 0
+    },
+    "/not-a-room": {
+      "status": 404,
+      "title": "Not found — Lesson Code Room",
+      "reflow": {
+        "clientWidth": 390,
+        "scrollWidth": 390
+      },
+      "seriousCritical": 0
+    }
+  },
+  "accessibility": {
+    "mobileRoutesSeriousCritical": 0,
+    "desktopLandingSeriousCritical": 0,
+    "keyboardDemo": true,
+    "keyboardTabs": true,
+    "focusRestoration": true,
+    "reducedMotion": {
+      "animationDuration": "1e-05s",
+      "transitionDuration": "1e-05s"
+    }
+  },
+  "privacy": {
+    "httpOrigins": [
+      "https://lesson-code-room.sociobot.in"
+    ],
+    "unexpectedConsoleErrors": [],
+    "expectedStimulusErrors": [
+      "console: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "console: Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "cookies": 0
+  },
+  "api": {
+    "health": {
+      "build_sha": "19733649f2e9051c73a3e69e33096f54adfdb940",
+      "ok": true
+    },
+    "demo": {
+      "storage": "demo-blob",
+      "id": "DEMO-HUZJXS",
+      "ttlSeconds": 7200,
+      "cacheControl": "no-store"
+    },
+    "livePersistence": {
+      "id": "TSVSWC",
+      "ttlSeconds": 86400,
+      "fetchedAgain": true
+    },
+    "boundaries": {
+      "accepted": {
+        "title": 80,
+        "instructions": 600,
+        "htmlBytes": 50000
+      },
+      "rejected": {
+        "title": 81,
+        "instructions": 601,
+        "htmlBytes": 50001
+      }
+    },
+    "concurrency": {
+      "attempted": 11,
+      "accepted": 10,
+      "roomFull": 1,
+      "capacity": 10
+    },
+    "progressPrivacyFields": [
+      "name",
+      "status"
+    ],
+    "rateLimit": {
+      "attempted": 60,
+      "statuses": {
+        "200": 39,
+        "429": 21
+      },
+      "retryAfterOneOnEvery429": true,
+      "recoveredAfterMs": 1100
+    },
+    "healthLoad": {
+      "attempted": 100,
+      "successful": 100,
+      "elapsedMs": 156,
+      "observedRps": 641
+    },
+    "headers": {
+      "rootCsp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.sociobot.in; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in; frame-ancestors 'none'",
+      "permissionsPolicy": "camera=(), microphone=(), geolocation=()",
+      "sandboxCsp": "default-src 'none'; script-src 'self' blob:; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; media-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'self'",
+      "sandboxFrameOptions": "SAMEORIGIN",
+      "jsCacheControl": "public, max-age=31536000, immutable",
+      "heroCacheControl": null
+    }
+  },
+  "performance": {
+    "liveVerifyLoadMs": 641,
+    "healthObservedRps": 641
+  }
+}

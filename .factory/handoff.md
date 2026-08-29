@@ -1,51 +1,47 @@
-# Lesson Code Room — polish 3 handoff
+# Lesson Code Room — verification 9 handoff
 
 Date: 2026-08-29
-Work order: `lesson-code-room-polish-3`
-Deployed repair: `e3a570da5ef9f784583f06ab81533892095f6767`
+
+Work order: `lesson-code-room-verify-9`
+
+Candidate: `19733649f2e9051c73a3e69e33096f54adfdb940`
+
 Live URL: <https://lesson-code-room.sociobot.in>
 
 ## Result
 
-All findings from reviews 1–3 are resolved. The last open finding, F-3-1, now uses the direct 404 heading `Page not found`, keeps a clear recovery sentence, and has an exact browser regression test.
+**PASS — release approved.** Fresh evidence shows the live service is the exact
+candidate and the earlier deployment-only failure is resolved. No product
+defects were found. Product code was not changed.
 
-The earlier first-screen, demo isolation, claims, metadata, routing, focus, legal, responsive, privacy, billing, and backend fixes remain intact. A cache-header edge case found during the final gate was also repaired: Vite hashes that contain `-` now receive immutable caching without misclassifying stable artwork. The 200% visual review also found and fixed crowded footer links; the test now rejects overlaps, not only horizontal scroll.
+## What was verified
 
-## Verification
+- All 18 commands in `.factory/claims.json` passed individually after the
+  locked dependency install.
+- `npm test` passed: production build, 4 Rust tests, and 37 Playwright tests.
+- TypeScript, Rust formatting, strict Clippy, locked release build, and the
+  exact Vite production build passed.
+- The live sample and a real custom room both completed the full
+  teacher-create/share → anonymous learner join/edit/run/reset/done → teacher
+  progress loop.
+- Live exact maxima, invalid input, authorization errors, 10-learner capacity,
+  concurrent joins, persistence, expiry, and recovery paths passed.
+- `/health` reports the full candidate SHA. Live JS, CSS, imagery, and sandbox
+  files byte-match local `dist/`.
+- A 60-request live API burst returned 39×200 and 21×429 across three replicas;
+  all 429 responses had `Retry-After: 1`, and the client recovered after 1.1 s.
+- Privacy logging found only the product origin, no cookies, and no unexpected
+  console/page errors. Security, sandbox, and caching headers passed.
+- Desktop and 390px mobile, keyboard-only operation, visible focus, 200% text,
+  reduced motion, touch targets, routing, 404 recovery, and axe checks passed.
+- Lighthouse mobile scored 99 performance, 100 accessibility, 100 best
+  practices, and 100 SEO. LCP was 1.67 s and CLS 0.0033.
+- Sociobot checkout returned the expected hosted-checkout redirect; no payment
+  was made.
 
-Final clean clone `/tmp/lesson-code-room-polish-3-final-TapIET` at `e3a570d`:
+Full details: [verification-9.md](verification-9.md).
 
-- `npm ci`: 26 packages, 0 vulnerabilities.
-- All 18 claim tests passed together. Each exact inventory command also passed individually in the earlier clean clone `/tmp/lesson-code-room-polish-3-Gk4Us4`.
-- `npm test`: build passed; 4/4 Rust tests and 37/37 Playwright tests passed.
-- `npx tsc -p frontend/tsconfig.json --noEmit`: passed.
-- `cargo fmt --all -- --check`: passed.
-- `cargo clippy --all-targets --all-features -- -D warnings`: passed.
-- Build payload: JS 31.00 KB raw / 9.72 KB gzip; CSS 18.97 KB / 4.96 KB gzip; fonts 71.35 KB.
-
-Production evidence after deployment:
-
-- `/health` returned `ok: true` and build SHA `e3a570da5ef9f784583f06ab81533892095f6767`.
-- `/opt/fleet/lib/verify-url.sh` passed with title, `lang=en`, one H1, main landmark, image alt text, and zero console errors.
-- Fresh 390 px and 1440 px Chromium contexts passed the landing, immediate demo, reset, route metadata, legal links, focus, 404, privacy-request, and 200% text checks.
-- Axe found 0 serious or critical findings on `/`, `/?demo=1`, `/privacy`, `/terms`, and the real HTTP 404.
-- Demo API returned `storage: demo-blob` and a `DEMO-*` room. Reset changed the room link.
-- The demo-flow request log contained only `https://lesson-code-room.sociobot.in`.
-- All public routes, robots, sitemap, sandbox, and health returned their expected status; the unknown route returned 404.
-- A 60-request API burst returned 39×200 and 21×429. Every 429 included `Retry-After: 1`.
-- A 100-request `/health` smoke completed with 100 successes in 99 ms (observed 1,010 requests/second).
-- Lighthouse mobile: performance 99, accessibility 100, best practices 100, SEO 100, FCP 1.50 s, LCP 1.65 s, TBT 37 ms, CLS 0.0033.
-
-Evidence is under `.factory/evidence/polish-3/`. The main artifacts are:
-
-- `live-audit.json` and `live-http-audit.json`
-- `live-landing-mobile.png` and `live-landing-desktop.png`
-- `live-demo-immediate-mobile.png`
-- `live-404-mobile.png` and `live-404-desktop.png`
-- `verify-url/verify.json`
-- `lighthouse.json`
-
-## Run and verify
+## Run locally
 
 ```sh
 npm ci
@@ -53,15 +49,30 @@ npm test
 npx tsc -p frontend/tsconfig.json --noEmit
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
+cargo build --locked --release
+npm run build
 ```
 
-Run the retained live audit after deployment:
+Re-run the independent deployed audit:
 
 ```sh
-node .factory/evidence/polish-3/live-audit.cjs
-node .factory/evidence/polish-3/live-http-audit.mjs
+node .factory/qa-artifacts/live-independent.mjs
 ```
+
+## Evidence
+
+- `.factory/qa-artifacts/claims-installed.log`
+- `.factory/qa-artifacts/npm-test.log`
+- `.factory/qa-artifacts/live-independent.json`
+- `.factory/qa-artifacts/verify-url/verify.json`
+- `.factory/qa-artifacts/lighthouse.json`
+- `.factory/qa-artifacts/live-first-read-desktop.png`
+- `.factory/qa-artifacts/live-first-read-mobile.png`
+- `.factory/qa-artifacts/live-workbench-mobile-full.png`
 
 ## Known gaps
 
-None.
+No Docker-compatible runtime is installed in the verifier container, so the
+Dockerfile could not be built locally. Its contract was source-reviewed, the
+locked release binary was exercised directly, and the matching deployed
+container is healthy. No product gap remains.

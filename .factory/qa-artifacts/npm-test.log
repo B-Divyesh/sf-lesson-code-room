@@ -1,0 +1,81 @@
+
+> lesson-code-room@0.1.0 test
+> npm run build && cargo test && playwright test
+
+
+> lesson-code-room@0.1.0 build
+> vite build --config frontend/vite.config.ts
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 5 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/index.html                                                     1.69 kB │ gzip: 0.63 kB
+../dist/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2  17.21 kB
+../dist/assets/atkinson-hyperlegible-latin-700-normal-GZI4o3u0.woff2  17.52 kB
+../dist/assets/fraunces-latin-wght-normal-ukD16Tqj.woff2              36.62 kB
+../dist/assets/index-lQv4KWLP.css                                     18.97 kB │ gzip: 4.96 kB
+../dist/assets/index-BJXiXpmR.js                                      31.00 kB │ gzip: 9.72 kB │ map: 60.17 kB
+✓ built in 356ms
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running unittests src/main.rs (target/debug/deps/lesson_code_room-a72a334f06bb56bf)
+
+running 4 tests
+test tests::only_content_hashed_assets_receive_immutable_caching ... ok
+test tests::room_busy_responses_are_retryable_not_server_errors ... ok
+test tests::room_codes_are_case_insensitive ... ok
+test tests::token_comparison_rejects_different_lengths ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[WebServer] (node:7126) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer]     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.14s
+[WebServer]      Running `target/debug/lesson-code-room`
+
+Running 37 tests using 1 worker
+
+(node:7146) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:7146) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/product.spec.ts:7:1 › landing page states the job and fits a phone (818ms)
+  ✓   2 tests/product.spec.ts:21:1 › @claim:demo-sample-data one click opens three named learner progress states before the demo request resolves (1.4s)
+  ✓   3 tests/product.spec.ts:52:1 › @claim:demo-storage-isolation demo activity uses a temporary isolated tenant, not the live room store (95ms)
+  ✓   4 tests/product.spec.ts:82:1 › @claim:anonymous-room learners join without an account and progress reaches the teacher (5.4s)
+  ✓   5 tests/product.spec.ts:100:1 › @claim:custom-room a teacher creates and shares custom starter code (2.6s)
+  ✓   6 tests/product.spec.ts:114:1 › a delayed teacher load cannot overwrite Back, and Forward loads the teacher view again (2.0s)
+  ✓   7 tests/product.spec.ts:150:1 › a delayed demo load cannot overwrite Back, and Forward opens a fresh demo (1.6s)
+  ✓   8 tests/product.spec.ts:185:1 › @claim:sandbox-run edited code runs inside a network-blocked sandbox (2.0s)
+  ✓   9 tests/product.spec.ts:210:1 › @claim:demo-reset reset creates isolated temporary sample data (897ms)
+  ✓  10 tests/product.spec.ts:225:1 › reset demo cancels the previous room poll before showing the fresh room (6.7s)
+  ✓  11 tests/product.spec.ts:240:1 › demo join and workbench retain the persistent sandbox banner (1.4s)
+  ✓  12 tests/product.spec.ts:254:1 › @claim:learner-reset restores all starter files and the rendered preview (2.6s)
+  ✓  13 tests/product.spec.ts:302:1 › @claim:privacy-code learner edits are not sent in progress updates (1.4s)
+  ✓  14 tests/product.spec.ts:326:1 › @claim:teacher-report-limits teacher reports contain progress but no grades or detailed activity (65ms)
+  ✓  15 tests/product.spec.ts:345:1 › @claim:product-scope the workbench has code tools but no repository or call controls (1.1s)
+  ✓  16 tests/product.spec.ts:359:1 › @claim:no-tracking landing and full demo flow load only product resources (1.6s)
+  ✓  17 tests/product.spec.ts:375:1 › @claim:session-storage room keys stay in one tab, not persistent browser storage (1.9s)
+  ✓  18 tests/product.spec.ts:390:1 › @claim:offline-preview a loaded workbench edits and previews while offline (1.9s)
+  ✓  19 tests/product.spec.ts:407:1 › learner preview runs repeatedly without console errors (1.7s)
+  ✓  20 tests/product.spec.ts:422:1 › a sandbox JavaScript error is visible and does not claim successful progress (1.3s)
+  ✓  21 tests/product.spec.ts:435:1 › done progress is monotonic in the API and learner workbench (3.6s)
+  ✓  22 tests/product.spec.ts:453:1 › @claim:free-capacity demo API reports the free 10 learner limit (62ms)
+  ✓  23 tests/product.spec.ts:461:1 › @claim:room-retention live rooms expire after 24 hours (18ms)
+  ✓  24 tests/product.spec.ts:472:1 › @claim:demo-retention demo API reports two-hour temporary storage (9ms)
+  ✓  25 tests/product.spec.ts:481:1 › @claim:paid-checkout uses the Sociobot hosted purchase, recorded-valid backend verification, and 30-learner capacity (2.7s)
+  ✓  26 tests/product.spec.ts:515:1 › every annotated visitor claim is inventoried and every inventory id is published (1.8s)
+  ✓  27 tests/product.spec.ts:538:1 › each route updates plain-language and social metadata (2.0s)
+  ✓  28 tests/product.spec.ts:557:1 › unknown routes explain the error in plain words (481ms)
+  ✓  29 tests/product.spec.ts:565:1 › 200 percent text reflows every public route on a 390px phone (1.4s)
+  ✓  30 tests/product.spec.ts:590:1 › landing, demo, and legal pages have no serious accessibility findings (8.3s)
+  ✓  31 tests/product.spec.ts:615:1 › @claim:rate-limit API bursts are limited with retry guidance (147ms)
+  ✓  32 tests/product.spec.ts:623:1 › rotating a caller supplied forwarding value cannot evade the ingress client limit (156ms)
+  ✓  33 tests/product.spec.ts:633:1 › participant API data is not stored and only hashed assets are immutable (36ms)
+  ✓  34 tests/product.spec.ts:647:1 › 390px navigation and footer links meet the 44px touch target baseline (985ms)
+  ✓  35 tests/product.spec.ts:662:1 › terms name the merchant of record and refund effect (436ms)
+  ✓  36 tests/product.spec.ts:668:1 › container defaults to the shared durable store instead of replica-local SQLite (5ms)
+  ✓  37 tests/product.spec.ts:678:1 › hashed production assets use the immutable cache policy (795ms)
+
+  37 passed (1.1m)
