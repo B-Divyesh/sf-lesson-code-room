@@ -1,7 +1,8 @@
 # Lesson Code Room — polish 2 handoff
 
 Date: 2026-08-29  
-Repair commit: `5f6c09eb282f0e695d4f68d485d658fb5923ef24`
+Primary repair commit: `5f6c09eb282f0e695d4f68d485d658fb5923ef24`  
+Production namespace correction: `6b7abd743ba0bd575c35b1afdfc6d2d0d261b101`
 
 ## Result
 
@@ -40,7 +41,27 @@ Deploy with `/opt/fleet/lib/deploy-container.sh lesson-code-room /work/repo Dock
 The app needs only `PORT`; live rooms choose managed-identity Blob storage,
 while a non-Azure boot falls back to SQLite.
 
+## Deployment and live cold-check
+
+Deployed through the work-order container configuration. `GET /health` at
+<https://lesson-code-room.sociobot.in/health> returned build
+`6b7abd743ba0bd575c35b1afdfc6d2d0d261b101`.
+
+Cold Chromium checks at 390 px confirmed `/`, `/privacy`, `/terms`, and the
+real 404 have their expected status, route title, one H1, and no horizontal
+overflow. `/?demo=1` showed the banner, Reset demo, Start for real, and the
+three named sample learners. A live `POST /api/demo` returned
+`storage: "demo-blob"` with a `DEMO-` identifier; that learner link opened the
+screen-name form. `/opt/fleet/lib/verify-url.sh` passed against the landing
+page with no console errors and title/lang/main/alt checks. Screenshots:
+`/tmp/lesson-code-room-polish-2-landing.png`,
+`/tmp/lesson-code-room-polish-2-demo.png`, and
+`/tmp/lesson-code-room-polish-2-404.png`.
+
+The standalone axe CLI could not start its Selenium Chrome driver in this
+container. The product's Playwright Axe suite passed all public routes and the
+join/workbench states in `npm test`.
+
 ## Known gaps
 
-None. The final live cold-check and deployment identity are appended after the
-work-order deployment completes.
+None.

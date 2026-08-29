@@ -1,6 +1,7 @@
 # Polish 2 — cumulative review disposition
 
-Repair commit: `5f6c09eb282f0e695d4f68d485d658fb5923ef24`  
+Primary repair commit: `5f6c09eb282f0e695d4f68d485d658fb5923ef24`  
+Production namespace correction: `6b7abd743ba0bd575c35b1afdfc6d2d0d261b101`  
 Live URL: <https://lesson-code-room.sociobot.in>
 
 Every finding in `.factory/review-1.md`, `.factory/polish-1.md`, and
@@ -21,7 +22,7 @@ Every finding in `.factory/review-1.md`, `.factory/polish-1.md`, and
 | F-1-8 | Removed the metaphorical surveillance eyebrow. | Copy audit and live landing check. |
 | F-1-9 | README test explanation remains split into two short sentences. | README audit; clean-clone test gate. |
 | F-1-10 | README storage explanation remains split into two short sentences. | README audit; clean-clone test gate. |
-| F-2-1 | Demo identifiers use the `DEMO-` namespace. Local/test runs use memory; deployed replicas use the separate `lesson-code-room-demo` Blob container. Live room code cannot write or resolve demo storage. | `@claim:demo-storage-isolation`; `src/main.rs` separation test; live `/demo` flow. |
+| F-2-1 | Demo identifiers use the `DEMO-` namespace. Local/test runs use memory; deployed replicas use the separate `lesson-code-room-demo` Blob container. Live room code cannot write or resolve demo storage. | `@claim:demo-storage-isolation`; live API returned `storage: "demo-blob"` and `DEMO-EXUQTA`; its learner link opened the join screen. |
 | F-2-2 | Added the `demo-sample-data` inventory entry and exact first-render assertion for all three named states. | `@claim:demo-sample-data`; landing and demo screenshots. |
 | Verification-6 P2 | Blob lease exhaustion now returns retryable `503` with `Retry-After: 1`, not HTTP 500. | Rust `room_busy_responses_are_retryable_not_server_errors`. |
 
