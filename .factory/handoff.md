@@ -1,47 +1,28 @@
-# Lesson Code Room — verification 9 handoff
+# Lesson Code Room — review 4 handoff
 
 Date: 2026-08-29
 
-Work order: `lesson-code-room-verify-9`
-
-Candidate: `19733649f2e9051c73a3e69e33096f54adfdb940`
+Work order: `lesson-code-room-review-4`
 
 Live URL: <https://lesson-code-room.sociobot.in>
 
 ## Result
 
-**PASS — release approved.** Fresh evidence shows the live service is the exact
-candidate and the earlier deployment-only failure is resolved. No product
-defects were found. Product code was not changed.
+**PASS.** The adversarial first-read review found zero blocking or minor findings. Product code was not changed.
 
-## What was verified
+## Work completed
 
-- All 18 commands in `.factory/claims.json` passed individually after the
-  locked dependency install.
-- `npm test` passed: production build, 4 Rust tests, and 37 Playwright tests.
-- TypeScript, Rust formatting, strict Clippy, locked release build, and the
-  exact Vite production build passed.
-- The live sample and a real custom room both completed the full
-  teacher-create/share → anonymous learner join/edit/run/reset/done → teacher
-  progress loop.
-- Live exact maxima, invalid input, authorization errors, 10-learner capacity,
-  concurrent joins, persistence, expiry, and recovery paths passed.
-- `/health` reports the full candidate SHA. Live JS, CSS, imagery, and sandbox
-  files byte-match local `dist/`.
-- A 60-request live API burst returned 39×200 and 21×429 across three replicas;
-  all 429 responses had `Retry-After: 1`, and the client recovered after 1.1 s.
-- Privacy logging found only the product origin, no cookies, and no unexpected
-  console/page errors. Security, sandbox, and caching headers passed.
-- Desktop and 390px mobile, keyboard-only operation, visible focus, 200% text,
-  reduced motion, touch targets, routing, 404 recovery, and axe checks passed.
-- Lighthouse mobile scored 99 performance, 100 accessibility, 100 best
-  practices, and 100 SEO. LCP was 1.67 s and CLS 0.0033.
-- Sociobot checkout returned the expected hosted-checkout redirect; no payment
-  was made.
+- Reviewed the live product cold at 390 × 844 and 1440 × 900.
+- Exercised the complete isolated demo, learner workbench, offline preview, reset, and teacher progress flow.
+- Read the brief, design, claims, demo documentation, README, all earlier reviews and polish reports, and the prior handoff.
+- Rechecked every earlier finding in the live deployment and current source.
+- Audited every landing and README sentence or UI copy fragment with word counts.
+- Checked route metadata, 404 behavior, links, back/focus handling, privacy requests, responsive reflow, accessibility, and visual identity.
+- Ran every claim command individually from a clean clone and ran the full quality gate.
 
-Full details: [verification-9.md](verification-9.md).
+Full result: [review-4.md](review-4.md).
 
-## Run locally
+## Verification
 
 ```sh
 npm ci
@@ -49,30 +30,10 @@ npm test
 npx tsc -p frontend/tsconfig.json --noEmit
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
-cargo build --locked --release
-npm run build
 ```
 
-Re-run the independent deployed audit:
+Results: all 18 claim commands passed individually; `npm test` passed 4 Rust and 37 Playwright tests; TypeScript, formatting, strict Clippy, live URL verification, and the independent deployed audit passed.
 
-```sh
-node .factory/qa-artifacts/live-independent.mjs
-```
+## Known gaps and next steps
 
-## Evidence
-
-- `.factory/qa-artifacts/claims-installed.log`
-- `.factory/qa-artifacts/npm-test.log`
-- `.factory/qa-artifacts/live-independent.json`
-- `.factory/qa-artifacts/verify-url/verify.json`
-- `.factory/qa-artifacts/lighthouse.json`
-- `.factory/qa-artifacts/live-first-read-desktop.png`
-- `.factory/qa-artifacts/live-first-read-mobile.png`
-- `.factory/qa-artifacts/live-workbench-mobile-full.png`
-
-## Known gaps
-
-No Docker-compatible runtime is installed in the verifier container, so the
-Dockerfile could not be built locally. Its contract was source-reviewed, the
-locked release binary was exercised directly, and the matching deployed
-container is healthy. No product gap remains.
+No product gap remains. No follow-up feature is indicated by the brief. Preserve the existing claim, demo-isolation, routing, reflow, and accessibility coverage when the product changes.
