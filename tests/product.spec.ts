@@ -569,6 +569,21 @@ test('200 percent text reflows every public route on a 390px phone', async ({ pa
     await page.evaluate(() => document.documentElement.style.setProperty('font-size', '32px', 'important'));
     await expect(page.locator('main h1')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${route} must not require horizontal panning`).toBeLessThanOrEqual(390);
+    const footerLinks = await page.locator('.footer-links a').evaluateAll((links) => links.map((link) => {
+      const rect = link.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+    }));
+    for (let first = 0; first < footerLinks.length; first += 1) {
+      expect(footerLinks[first].left, `${route} footer link ${first + 1} starts inside the viewport`).toBeGreaterThanOrEqual(0);
+      expect(footerLinks[first].right, `${route} footer link ${first + 1} ends inside the viewport`).toBeLessThanOrEqual(390);
+      for (let second = first + 1; second < footerLinks.length; second += 1) {
+        const overlaps = footerLinks[first].left < footerLinks[second].right
+          && footerLinks[first].right > footerLinks[second].left
+          && footerLinks[first].top < footerLinks[second].bottom
+          && footerLinks[first].bottom > footerLinks[second].top;
+        expect(overlaps, `${route} footer links ${first + 1} and ${second + 1} must not overlap`).toBe(false);
+      }
+    }
   }
 });
 

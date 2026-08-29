@@ -208,8 +208,8 @@ textarea { min-height: 7rem; padding: .8rem; resize: vertical; line-height: 1.5;
 
 .site-footer { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 2rem; align-items: center; padding: 2rem clamp(1.25rem, 5vw, 5rem); color: var(--mist); border-top: 1px solid var(--line); background: #080e12; font-size: .9rem; }
 .site-footer p { margin: 0; }
-.footer-links { display: flex; gap: .75rem; }
-.footer-links a { display: inline-flex; align-items: center; justify-content: center; min-width: 48px; min-height: 48px; }
+.footer-links { display: flex; flex-wrap: wrap; gap: .75rem; }
+.footer-links a { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; min-width: 48px; min-height: 48px; padding-inline: .25rem; }
 
 @keyframes room-reveal { from { opacity: 0; transform: scale(1.025); } to { opacity: 1; transform: scale(1); } }
 @keyframes lamp-load { from { opacity: .4; transform: scaleX(.55); } to { opacity: 1; transform: scaleX(1); } }
