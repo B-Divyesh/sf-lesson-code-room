@@ -1,0 +1,72 @@
+{
+  "checkedAt": "2026-08-29T17:24:29.430Z",
+  "base": "https://lesson-code-room.sociobot.in",
+  "health": {
+    "build_sha": "e3a570da5ef9f784583f06ab81533892095f6767",
+    "ok": true
+  },
+  "routes": {
+    "/": {
+      "status": 200,
+      "contentType": "text/html"
+    },
+    "/?demo=1": {
+      "status": 200,
+      "contentType": "text/html"
+    },
+    "/demo": {
+      "status": 200,
+      "contentType": "text/html"
+    },
+    "/privacy": {
+      "status": 200,
+      "contentType": "text/html"
+    },
+    "/terms": {
+      "status": 200,
+      "contentType": "text/html"
+    },
+    "/robots.txt": {
+      "status": 200,
+      "contentType": "text/plain"
+    },
+    "/sitemap.xml": {
+      "status": 200,
+      "contentType": "text/xml"
+    },
+    "/sandbox.html": {
+      "status": 200,
+      "contentType": "text/html"
+    },
+    "/missing-classroom": {
+      "status": 404,
+      "contentType": "text/html"
+    },
+    "/health": {
+      "status": 200,
+      "contentType": "application/json"
+    }
+  },
+  "immutableAsset": {
+    "path": "/assets/index-BJXiXpmR.js",
+    "cacheControl": "public, max-age=31536000, immutable"
+  },
+  "sandbox": {
+    "frameOptions": "SAMEORIGIN",
+    "contentSecurityPolicy": "default-src 'none'; script-src 'self' blob:; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; media-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'self'"
+  },
+  "rateLimit": {
+    "requests": 60,
+    "statuses": {
+      "200": 39,
+      "429": 21
+    },
+    "allLimitedResponsesHaveRetryAfterOne": true
+  },
+  "loadSmoke": {
+    "requests": 100,
+    "successful": 100,
+    "elapsedMs": 99,
+    "observedRps": 1010
+  }
+}

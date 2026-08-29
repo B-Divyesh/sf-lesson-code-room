@@ -1,0 +1,139 @@
+{
+  "checkedAt": "2026-08-29T17:29:41.764Z",
+  "base": "https://lesson-code-room.sociobot.in",
+  "health": {
+    "build_sha": "e3a570da5ef9f784583f06ab81533892095f6767",
+    "ok": true
+  },
+  "firstScreen": {
+    "h1": "Run one coding exercise together",
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "demo": {
+    "storage": "demo-blob",
+    "firstRoom": "DEMO-EFKYJK",
+    "resetChangedRoom": true,
+    "immediateLearners": [
+      "Moss Finch — Done",
+      "Blue Comet — Ran code",
+      "Quiet Fox — Joined"
+    ]
+  },
+  "routes": {
+    "/": {
+      "status": 200,
+      "h1": "Run one coding exercise together",
+      "meta": {
+        "title": "Lesson Code Room — Run a shared coding exercise",
+        "description": "Open one HTML, CSS, and JavaScript exercise for a live lesson. Learners join without accounts and teachers see simple progress.",
+        "canonical": "https://lesson-code-room.sociobot.in/",
+        "ogTitle": "Lesson Code Room — Run a shared coding exercise",
+        "ogDescription": "Open one HTML, CSS, and JavaScript exercise for a live lesson. Learners join without accounts and teachers see simple progress.",
+        "twitterTitle": "Lesson Code Room — Run a shared coding exercise",
+        "twitterDescription": "Open one HTML, CSS, and JavaScript exercise for a live lesson. Learners join without accounts and teachers see simple progress."
+      },
+      "reflow": "390/390",
+      "footerLinksOverlap": false,
+      "seriousCritical": 0,
+      "legalLinks": [
+        "Privacy",
+        "Terms"
+      ]
+    },
+    "/?demo=1": {
+      "status": 200,
+      "h1": "Make the night sky respond",
+      "meta": {
+        "title": "Demo — Lesson Code Room",
+        "description": "See learner progress for Make the night sky respond.",
+        "canonical": "https://lesson-code-room.sociobot.in/demo",
+        "ogTitle": "Demo — Lesson Code Room",
+        "ogDescription": "See learner progress for Make the night sky respond.",
+        "twitterTitle": "Demo — Lesson Code Room",
+        "twitterDescription": "See learner progress for Make the night sky respond."
+      },
+      "reflow": "390/390",
+      "footerLinksOverlap": false,
+      "seriousCritical": 0,
+      "legalLinks": [
+        "Privacy",
+        "Terms"
+      ]
+    },
+    "/privacy": {
+      "status": 200,
+      "h1": "Privacy without a student account",
+      "meta": {
+        "title": "Privacy — Lesson Code Room",
+        "description": "How Lesson Code Room stores short-lived room and learner progress data.",
+        "canonical": "https://lesson-code-room.sociobot.in/privacy",
+        "ogTitle": "Privacy — Lesson Code Room",
+        "ogDescription": "How Lesson Code Room stores short-lived room and learner progress data.",
+        "twitterTitle": "Privacy — Lesson Code Room",
+        "twitterDescription": "How Lesson Code Room stores short-lived room and learner progress data."
+      },
+      "reflow": "390/390",
+      "footerLinksOverlap": false,
+      "seriousCritical": 0,
+      "legalLinks": [
+        "Privacy",
+        "Terms"
+      ]
+    },
+    "/terms": {
+      "status": 200,
+      "h1": "Terms for using a lesson room",
+      "meta": {
+        "title": "Terms — Lesson Code Room",
+        "description": "Terms for using Lesson Code Room and buying the one-time Room Plus license.",
+        "canonical": "https://lesson-code-room.sociobot.in/terms",
+        "ogTitle": "Terms — Lesson Code Room",
+        "ogDescription": "Terms for using Lesson Code Room and buying the one-time Room Plus license.",
+        "twitterTitle": "Terms — Lesson Code Room",
+        "twitterDescription": "Terms for using Lesson Code Room and buying the one-time Room Plus license."
+      },
+      "reflow": "390/390",
+      "footerLinksOverlap": false,
+      "seriousCritical": 0,
+      "legalLinks": [
+        "Privacy",
+        "Terms"
+      ]
+    },
+    "/missing-classroom": {
+      "status": 404,
+      "h1": "Page not found",
+      "meta": {
+        "title": "Not found — Lesson Code Room",
+        "description": "The requested lesson room or page could not be opened.",
+        "canonical": "https://lesson-code-room.sociobot.in/missing-classroom",
+        "ogTitle": "Not found — Lesson Code Room",
+        "ogDescription": "The requested lesson room or page could not be opened.",
+        "twitterTitle": "Not found — Lesson Code Room",
+        "twitterDescription": "The requested lesson room or page could not be opened."
+      },
+      "reflow": "390/390",
+      "footerLinksOverlap": false,
+      "seriousCritical": 0,
+      "legalLinks": [
+        "Privacy",
+        "Terms"
+      ]
+    }
+  },
+  "focus": {
+    "forward": "Privacy without a student account",
+    "back": "Run one coding exercise together"
+  },
+  "privacy": {
+    "requestOrigins": [
+      "https://lesson-code-room.sociobot.in"
+    ],
+    "consoleErrors": []
+  },
+  "immutableAsset": {
+    "path": "/assets/index-BJXiXpmR.js",
+    "cacheControl": "public, max-age=31536000, immutable"
+  }
+}

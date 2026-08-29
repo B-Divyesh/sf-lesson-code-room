@@ -73,4 +73,4 @@ Removed the four non-informational eyebrows from the landing page. The sample ac
 
 The former metaphorical 404 heading was replaced with the direct result, **Page not found**.
 
-Catalog description: **Run one shared coding exercise and see learner progress without student accounts.** (12 words, 77 characters)
+Catalog description: **Run one shared coding exercise and see learner progress without student accounts.** (12 words, 81 characters)

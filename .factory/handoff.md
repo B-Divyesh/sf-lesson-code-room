@@ -1,25 +1,51 @@
-# Lesson Code Room — review 3 handoff
+# Lesson Code Room — polish 3 handoff
 
-Date: 2026-08-29  
-Review commit: recorded after `ff9051f45aa4aa41497b775fd8255ed7dff700c4`
+Date: 2026-08-29
+Work order: `lesson-code-room-polish-3`
+Deployed repair: `e3a570da5ef9f784583f06ab81533892095f6767`
+Live URL: <https://lesson-code-room.sociobot.in>
 
 ## Result
 
-No product code was changed. The requested adversarial first-read review is in `.factory/review-3.md`.
+All findings from reviews 1–3 are resolved. The last open finding, F-3-1, now uses the direct 404 heading `Page not found`, keeps a clear recovery sentence, and has an exact browser regression test.
 
-The review verdict is **FAIL** for one P2 copy issue: the designed 404 uses the metaphorical H1 “This page is not in the room.” Replace it with “Page not found” and add a regression assertion. Everything else reviewed passes, including first-read clarity, sample/demo isolation behaviour, current claims, routing, metadata, mobile reflow, and previous finding repairs.
+The earlier first-screen, demo isolation, claims, metadata, routing, focus, legal, responsive, privacy, billing, and backend fixes remain intact. A cache-header edge case found during the final gate was also repaired: Vite hashes that contain `-` now receive immutable caching without misclassifying stable artwork. The 200% visual review also found and fixed crowded footer links; the test now rejects overlaps, not only horizontal scroll.
 
-## Verification performed
+## Verification
 
-- Fresh clone: `/tmp/lesson-code-room-review-3-mOKfX1`; `npm ci` passed with 0 vulnerabilities.
-- `npm test -- --grep '@claim:'` passed all 18 declared claim tests.
-- `npm test` passed: production Vite build, 4 Rust tests, and 36 Playwright tests.
-- `npx tsc -p frontend/tsconfig.json --noEmit`, `cargo fmt --all -- --check`, and `cargo clippy --all-targets --all-features -- -D warnings` passed.
-- Fresh live Chromium at mobile 390 × 844 and desktop 1440 × 900: first screen answers job, audience, and first action; no ordinary console errors; landing has no horizontal overflow.
-- Live one-click demo showed the populated three-learner sample before provision completed, the persistent demo banner, Reset demo, Start for real, separately named `DEMO-*` rooms, and a working reset. Browser request logging showed product-origin traffic only plus the preview's opaque sandbox origin.
-- Live route crawl checked `/`, `/demo`, `/privacy`, `/terms`, a 404, all discovered internal links, the checkout redirect, and Param Factory. Route titles, metadata, canonical/social fields, h1/main, responsive reflow, focus after navigation, legal/footer links, robots, sitemap, and favicon were checked.
+Final clean clone `/tmp/lesson-code-room-polish-3-final-TapIET` at `e3a570d`:
 
-## How to rerun
+- `npm ci`: 26 packages, 0 vulnerabilities.
+- All 18 claim tests passed together. Each exact inventory command also passed individually in the earlier clean clone `/tmp/lesson-code-room-polish-3-Gk4Us4`.
+- `npm test`: build passed; 4/4 Rust tests and 37/37 Playwright tests passed.
+- `npx tsc -p frontend/tsconfig.json --noEmit`: passed.
+- `cargo fmt --all -- --check`: passed.
+- `cargo clippy --all-targets --all-features -- -D warnings`: passed.
+- Build payload: JS 31.00 KB raw / 9.72 KB gzip; CSS 18.97 KB / 4.96 KB gzip; fonts 71.35 KB.
+
+Production evidence after deployment:
+
+- `/health` returned `ok: true` and build SHA `e3a570da5ef9f784583f06ab81533892095f6767`.
+- `/opt/fleet/lib/verify-url.sh` passed with title, `lang=en`, one H1, main landmark, image alt text, and zero console errors.
+- Fresh 390 px and 1440 px Chromium contexts passed the landing, immediate demo, reset, route metadata, legal links, focus, 404, privacy-request, and 200% text checks.
+- Axe found 0 serious or critical findings on `/`, `/?demo=1`, `/privacy`, `/terms`, and the real HTTP 404.
+- Demo API returned `storage: demo-blob` and a `DEMO-*` room. Reset changed the room link.
+- The demo-flow request log contained only `https://lesson-code-room.sociobot.in`.
+- All public routes, robots, sitemap, sandbox, and health returned their expected status; the unknown route returned 404.
+- A 60-request API burst returned 39×200 and 21×429. Every 429 included `Retry-After: 1`.
+- A 100-request `/health` smoke completed with 100 successes in 99 ms (observed 1,010 requests/second).
+- Lighthouse mobile: performance 99, accessibility 100, best practices 100, SEO 100, FCP 1.50 s, LCP 1.65 s, TBT 37 ms, CLS 0.0033.
+
+Evidence is under `.factory/evidence/polish-3/`. The main artifacts are:
+
+- `live-audit.json` and `live-http-audit.json`
+- `live-landing-mobile.png` and `live-landing-desktop.png`
+- `live-demo-immediate-mobile.png`
+- `live-404-mobile.png` and `live-404-desktop.png`
+- `verify-url/verify.json`
+- `lighthouse.json`
+
+## Run and verify
 
 ```sh
 npm ci
@@ -29,8 +55,13 @@ cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 ```
 
-For manual verification, open <https://lesson-code-room.sociobot.in>, use **Try it with sample data**, and check the persistent demo treatment through the learner workbench.
+Run the retained live audit after deployment:
 
-## Known gap
+```sh
+node .factory/evidence/polish-3/live-audit.cjs
+node .factory/evidence/polish-3/live-http-audit.mjs
+```
 
-The only open finding is `F-3-1` in `.factory/review-3.md`: use plain “Page not found” copy for the 404 H1.
+## Known gaps
+
+None.
