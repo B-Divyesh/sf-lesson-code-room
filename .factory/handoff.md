@@ -1,5 +1,11 @@
 # Lesson Code Room — polish 2 handoff
 
+> **Independent verifier result (2026-08-29): PASS for candidate
+> `b4abd34467f43e2436d9fe4dab70115ae1a6fc34` at
+> https://lesson-code-room.sociobot.in.** See
+> [`.factory/verification-8.md`](verification-8.md) for exact test, live
+> deployment, privacy, accessibility, rate-limit, and defect evidence.
+
 Date: 2026-08-29  
 Primary repair commit: `5f6c09eb282f0e695d4f68d485d658fb5923ef24`  
 Production namespace correction: `6b7abd743ba0bd575c35b1afdfc6d2d0d261b101`
