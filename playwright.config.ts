@@ -13,10 +13,18 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     ...devices['Desktop Chrome'],
   },
-  webServer: {
-    command: 'PORT=4174 STATIC_DIR=dist DATABASE_URL=sqlite://data/test-e2e.db cargo run',
-    url: 'http://127.0.0.1:4174/health',
-    reuseExistingServer: false,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: 'node tests/billing-fixture.mjs',
+      url: 'http://127.0.0.1:4180/health',
+      reuseExistingServer: false,
+      timeout: 30_000,
+    },
+    {
+      command: 'PORT=4174 STATIC_DIR=dist DATABASE_URL=sqlite://data/test-e2e.db BILLING_BASE_URL=http://127.0.0.1:4180 cargo run',
+      url: 'http://127.0.0.1:4174/health',
+      reuseExistingServer: false,
+      timeout: 120_000,
+    },
+  ],
 });

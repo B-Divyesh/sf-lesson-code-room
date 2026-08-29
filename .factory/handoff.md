@@ -1,35 +1,32 @@
-# Lesson Code Room — independent verification 5 handoff
+# Lesson Code Room — repair handoff
 
 Date: 2026-08-29
 
-Work order: `lesson-code-room-verify-5`
+Work order: `lesson-code-room-repair-5`
 
-Candidate: `2f1abc3924bd1d7fefef9530757b4173c9e093de`
-
-Live URL: https://lesson-code-room.sociobot.in
+Base verifier report: `.factory/verification-5.md` for candidate `2f1abc3924bd1d7fefef9530757b4173c9e093de`
 
 ## Result
 
-**FAIL — do not release.** The deployed SHA and frontend bytes match the candidate, all 16 declared claim commands pass, and the real custom-room/demo flows work. Three P1 blockers remain:
+All five findings from independent verification 5 are repaired without changing the product scope, demo behavior, privacy model, or existing claims.
 
-1. A delayed teacher-room fetch can finish after an immediate browser Back action and overwrite the home page with the private teacher view while the URL remains `/`.
-2. The `paid-checkout` test mocks a valid browser verdict but never proves that a valid license creates a 30-learner backend room or enforces the 30/31 boundary.
-3. `Dockerfile` pins `rust:1.89-bookworm`, contrary to the mandatory rolling `rust:1-slim`/`rust:1-alpine` build contract.
+### Repairs
 
-Two P2 findings also remain: the Privacy page’s email link is only 149×21 px at 390 px, and README describes the rate key as the first forwarded address while the secure implementation uses the right-most ingress-appended address.
+1. **Stale history renders:** route renders now carry a monotonically increasing generation. Async demo, teacher-room, and learner-room results commit DOM only while their generation remains current. Teacher navigation also commits a matching loading title and page before fetching. The demo reset goes through the same invalidating router path.
+2. **Paid capacity claim:** the Playwright harness starts a local billing fixture that returns the recorded valid Sociobot-shaped verdict only for `recorded-room-plus-license`. The `@claim:paid-checkout` test still verifies the real hosted checkout redirect and browser restore flow, then creates a backend-verified licensed room and proves `paid_capacity: true`, `capacity: 30`, 30 successful joins, and one 31st `409 room_full` response.
+3. **Container base:** the Rust builder is now the required rolling stable `rust:1-slim`; it retains the default `BUILD_SHA=dev` argument and no `.git` dependency.
+4. **Privacy target:** the inline privacy email is now an intentionally sized 44 px inline-flex target, covered at 390 px.
+5. **Security docs:** README now correctly describes the trusted ingress-appended right-most valid `X-Forwarded-For` rate key.
 
-## What was verified
+## Regression coverage
 
-- Clean `npm ci`; all 16 claim commands run separately; `npm test` (3 Rust + 30 Playwright), TypeScript, rustfmt, Clippy, locked release build, and exact Vite build all passed.
-- Live `/health` returned the candidate SHA; live JS/CSS hashes exactly matched local `dist/`.
-- Teacher-created custom starter code reached a separate anonymous learner, ran, and updated teacher progress.
-- Demo reset isolation, persistent demo controls, offline preview, reset, sandbox error recovery, monotonic Done, privacy payloads, hostile-name escaping, input boundaries, 10/11 capacity, and cross-request persistence passed.
-- All product API routes enforced the 13-per-replica burst limiter with `429` and `Retry-After: 1`; the three-replica observed fleet ceiling was 39. Rotating caller headers did not bypass it. Billing verification allowed 30 of 80 burst requests and returned `Retry-After: 4` on the other 50.
-- Security headers, same-origin normal-flow requests, cache policy, route/link crawl, keyboard flow, 390 px layouts, reduced motion, and axe scans passed except for the email hit area noted above.
-- Fresh Lighthouse mobile scores: 99 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.7 s, CLS 0.021, TBT 0 ms.
-- The release binary started with only `PORT` plus an executable `PATH`, persisted a local room across restart, and served 100 concurrent reads in 184 ms.
+`tests/product.spec.ts` adds delayed `/api/rooms/:id` and `/api/demo` tests: each takes immediate browser Back, confirms that no stale private/demo DOM reaches home, then takes Forward and verifies the expected destination. It also covers the complete recorded-valid paid-room capacity outcome and the privacy email touch target at 390 px.
 
-## How to reproduce
+`tests/billing-fixture.mjs` and `tests/fixtures/recorded-valid-license.json` are test-only, local fixture assets. Runtime billing remains Sociobot-only.
+
+## Verification evidence
+
+Executed from a clean dependency install:
 
 ```sh
 npm ci
@@ -41,10 +38,19 @@ cargo build --locked --release
 npm run build
 ```
 
-For the route race, delay the live `GET /api/rooms/:id` response after creating a room, select Back as soon as `/teach/:id` appears, and wait. The URL becomes `/`, but the title/H1 and learner-link field come from the teacher page.
+Results:
 
-Full findings and exact evidence are in [verification-5.md](verification-5.md).
+- `npm ci`: 26 packages installed; 0 audit vulnerabilities.
+- `npm test`: passed — Vite production build, 3 Rust unit tests, and 32 Playwright tests, including all 16 declared claim tags.
+- TypeScript, rustfmt, Clippy (`-D warnings`), locked release build, and production frontend build: passed.
+- Production binary no-config smoke: `PORT=4189 target/release/lesson-code-room`; `/health` returned `{"build_sha":"dev","ok":true}`.
+- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4189 <evidence-dir>`: passed. It recorded a 200 response, no browser console/page errors, title `Lesson Code Room — Run a shared coding exercise`, `lang=en`, one H1, a main landmark, and zero images without `alt`.
+- Pinned Playwright Axe checks passed on landing, demo, join, workbench, Privacy, Terms, and 404 with zero serious/critical violations. The separately invoked `@axe-core/cli` could not start because its Selenium Chrome binary is absent in this container; it is not used as accessibility evidence.
 
-## Verification limitation
+## Deployment
 
-No Docker-compatible engine is installed in the verifier container, so the image was not built. This does not obscure the explicit pinned-base violation in the Dockerfile.
+Target: Azure Container App `sf-lesson-code-room` in resource group `sociobot`, built in registry `sociobotregistry.azurecr.io`. The deployment uses the committed source through `az acr build`, with the commit supplied as `BUILD_SHA`, followed by a Container App image revision and live `/health` identity check.
+
+## Known gaps
+
+None in the repaired product. Docker-compatible local engines are not installed in this worker, so the container is built through the configured Azure Container Registry rather than locally.

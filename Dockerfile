@@ -5,7 +5,7 @@ RUN npm ci
 COPY frontend ./frontend
 RUN npm run build
 
-FROM rust:1.89-bookworm AS rust-builder
+FROM rust:1-slim AS rust-builder
 ARG BUILD_SHA=dev
 ENV BUILD_SHA=${BUILD_SHA}
 WORKDIR /source

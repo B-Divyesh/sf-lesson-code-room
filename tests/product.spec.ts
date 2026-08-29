@@ -50,6 +50,76 @@ test('@claim:custom-room a teacher creates and shares custom starter code', asyn
   await expect(learner.getByLabel('HTML code')).toHaveValue('<main><h1>Private starter heading</h1></main>');
 });
 
+test('a delayed teacher load cannot overwrite Back, and Forward loads the teacher view again', async ({ page }) => {
+  let delayed = true;
+  let releaseResponse: (() => void) | undefined;
+  let requestStarted!: () => void;
+  const requestStartedPromise = new Promise<void>((resolve) => { requestStarted = resolve; });
+  await page.route('**/api/rooms/*', async (route) => {
+    if (route.request().method() !== 'GET' || !delayed) {
+      await route.continue();
+      return;
+    }
+    delayed = false;
+    requestStarted();
+    await new Promise<void>((resolve) => { releaseResponse = resolve; });
+    await route.continue();
+  });
+
+  await page.goto('/');
+  await page.getByLabel('Exercise title').fill('Back navigation proof');
+  await page.getByRole('button', { name: 'Create room and join link' }).click();
+  await expect(page).toHaveURL(/\/teach\//);
+  await requestStartedPromise;
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Opening teacher room');
+
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Run one coding exercise together');
+  releaseResponse?.();
+  await page.waitForTimeout(150);
+  await expect(page).toHaveTitle('Lesson Code Room — Run a shared coding exercise');
+  await expect(page.getByLabel('Learner join link')).toHaveCount(0);
+
+  await page.goForward();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Back navigation proof');
+  await expect(page.getByLabel('Learner join link')).toBeVisible();
+});
+
+test('a delayed demo load cannot overwrite Back, and Forward opens a fresh demo', async ({ page }) => {
+  let delayed = true;
+  let releaseResponse: (() => void) | undefined;
+  let requestStarted!: () => void;
+  const requestStartedPromise = new Promise<void>((resolve) => { requestStarted = resolve; });
+  await page.route('**/api/demo', async (route) => {
+    if (route.request().method() !== 'POST' || !delayed) {
+      await route.continue();
+      return;
+    }
+    delayed = false;
+    requestStarted();
+    await new Promise<void>((resolve) => { releaseResponse = resolve; });
+    await route.continue();
+  });
+
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Demo' }).click();
+  await expect(page).toHaveURL('/demo');
+  await requestStartedPromise;
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Opening the sample room');
+
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Run one coding exercise together');
+  releaseResponse?.();
+  await page.waitForTimeout(150);
+  await expect(page.getByLabel('Learner join link')).toHaveCount(0);
+
+  await page.goForward();
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByLabel('Learner join link')).toBeVisible();
+});
+
 test('@claim:sandbox-run edited code runs inside a network-blocked sandbox', async ({ page }) => {
   const outgoing: string[] = [];
   const responses: string[] = [];
@@ -346,7 +416,7 @@ test('@claim:demo-retention demo API reports two-hour temporary storage', async 
   expect(body.room.expires_at).toBeLessThanOrEqual(before + 7_210);
 });
 
-test('@claim:paid-checkout uses the Sociobot hosted purchase and restore contract', async ({ page }) => {
+test('@claim:paid-checkout uses the Sociobot hosted purchase, recorded-valid backend verification, and 30-learner capacity', async ({ page, request }) => {
   await page.goto('/');
   await expect(page.getByRole('link', { name: 'Buy Room Plus' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/lesson-code-room/checkout');
   const checkout = await page.request.get('https://api.sociobot.in/api/v1/products/lesson-code-room/checkout', { maxRedirects: 0 });
@@ -362,6 +432,22 @@ test('@claim:paid-checkout uses the Sociobot hosted purchase and restore contrac
   await expect(page.getByText('Room Plus is active. New rooms allow 30 learners.')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('sb_license:lesson-code-room'))).toBe('test-room-plus-token');
   expect(JSON.parse(await page.evaluate(() => localStorage.getItem('sb_license_verdict:lesson-code-room')) ?? '{}')).toEqual(expect.objectContaining({ valid: true }));
+
+  const created = await request.post('/api/rooms', { data: {
+    title: 'Licensed capacity proof', instructions: 'Join this recorded-license room.', html: '<h1>Ready</h1>', css: '', javascript: '',
+    license: 'recorded-room-plus-license',
+  }, headers: { 'X-Forwarded-For': '198.51.100.90' } });
+  expect(created.ok()).toBeTruthy();
+  const licensed = await created.json();
+  expect(licensed.paid_capacity).toBe(true);
+  expect(licensed.room.capacity).toBe(30);
+
+  const joins = await Promise.all(Array.from({ length: 31 }, (_, index) => request.post(`/api/rooms/${licensed.room.id}/join`, {
+    data: { name: `Licensed learner ${index + 1}` },
+    headers: { 'X-Forwarded-For': `198.51.101.${index + 1}` },
+  })));
+  expect(joins.filter((response) => response.status() === 200)).toHaveLength(30);
+  expect(joins.filter((response) => response.status() === 409)).toHaveLength(1);
 });
 
 test('every annotated visitor claim is inventoried and every inventory id is published', async ({ page }) => {
@@ -452,6 +538,11 @@ test('390px navigation and footer links meet the 44px touch target baseline', as
     expect(box, 'interactive target must be measurable').not.toBeNull();
     expect(Math.min(box!.width, box!.height), `${await link.innerText()} measured ${box!.width}×${box!.height}`).toBeGreaterThanOrEqual(44);
   }
+  await page.goto('/privacy');
+  const email = page.getByRole('link', { name: 'privacy@sociobot.in' });
+  const emailBox = await email.boundingBox();
+  expect(emailBox, 'privacy email must be measurable').not.toBeNull();
+  expect(Math.min(emailBox!.width, emailBox!.height), `privacy email measured ${emailBox!.width}×${emailBox!.height}`).toBeGreaterThanOrEqual(44);
 });
 
 test('terms name the merchant of record and refund effect', async ({ page }) => {

@@ -6,6 +6,7 @@ const PRODUCT = 'lesson-code-room';
 const BILLING_BASE = 'https://api.sociobot.in';
 const VERSION = 'v1.0';
 let cleanupRoute: (() => void) | undefined;
+let routeGeneration = 0;
 
 const starter = {
   title: 'Make a welcome card',
@@ -288,7 +289,11 @@ async function refreshCachedLicense(status: HTMLElement): Promise<void> {
   } catch { /* keep the cached experience */ }
 }
 
-async function demoPage(): Promise<void> {
+function isCurrentRoute(generation: number): boolean {
+  return generation === routeGeneration;
+}
+
+async function demoPage(generation: number): Promise<void> {
   // Reset can be initiated from the teacher screen itself. Stop that screen's
   // polling before replacing its DOM so an old room can never paint into the
   // fresh demo room.
@@ -298,8 +303,10 @@ async function demoPage(): Promise<void> {
   shell(`<main id="main" class="loading-page"><h1>Opening the sample room</h1><div class="lamp-loader" aria-hidden="true"></div><p>This takes one short moment.</p></main>`, demoBanner());
   try {
     const result = await request<{ room: Room; teacher_token: string }>('/api/demo', { method: 'POST', body: '{}' });
+    if (!isCurrentRoute(generation)) return;
     renderTeacher(result.room, result.teacher_token, true);
   } catch (caught) {
+    if (!isCurrentRoute(generation)) return;
     renderErrorPage('The sample room did not open', caught instanceof Error ? caught.message : 'Try again.', '/demo', 'Reset demo');
   }
 }
@@ -309,10 +316,10 @@ function demoBanner(): string {
 }
 
 function bindDemoBanner(): void {
-  document.querySelector('#reset-demo')?.addEventListener('click', () => void demoPage());
+  document.querySelector('#reset-demo')?.addEventListener('click', () => void renderRoute());
 }
 
-async function teacherPage(roomId: string): Promise<void> {
+async function teacherPage(roomId: string, generation: number): Promise<void> {
   const fragment = new URLSearchParams(location.hash.slice(1));
   const fromLink = fragment.get('teacher');
   if (fromLink) {
@@ -323,10 +330,14 @@ async function teacherPage(roomId: string): Promise<void> {
     renderErrorPage('This teacher link is incomplete', 'Open the private teacher link created with the room.', '/', 'Create another room');
     return;
   }
+  setMeta('Teach — Lesson Code Room', 'Open the private teacher view for a live coding room.', `/teach/${roomId}`);
+  shell(`<main id="main" class="loading-page"><h1>Opening teacher room</h1><div class="lamp-loader" aria-hidden="true"></div><p>Loading learner progress.</p></main>`);
   try {
     const room = await request<Room>(`/api/rooms/${roomId}`);
+    if (!isCurrentRoute(generation)) return;
     renderTeacher(room, teacherToken, false);
   } catch (caught) {
+    if (!isCurrentRoute(generation)) return;
     renderErrorPage('This room is unavailable', caught instanceof Error ? caught.message : 'Check the link.', '/', 'Create another room');
   }
 }
@@ -416,17 +427,19 @@ function statusLabel(status: Participant['status']): string {
   return status === 'joined' ? 'Joined' : status === 'ran' ? 'Ran code' : 'Done';
 }
 
-async function roomPage(roomId: string): Promise<void> {
+async function roomPage(roomId: string, generation: number): Promise<void> {
   setMeta('Join a room — Lesson Code Room', 'Join a live HTML, CSS, and JavaScript exercise without an account.', `/room/${roomId}`);
   shell(`<main id="main" class="loading-page"><h1>Opening room ${escapeHtml(roomId)}</h1><div class="lamp-loader" aria-hidden="true"></div><p>Loading the starter exercise.</p></main>`);
   try {
     const room = await request<Room>(`/api/rooms/${roomId}`);
+    if (!isCurrentRoute(generation)) return;
     const saved = sessionStorage.getItem(`learner:${room.id}`);
     if (saved) {
       const session = JSON.parse(saved) as { learner_token: string; name: string };
       renderWorkbench(room, session.learner_token, session.name, room.is_demo);
     } else renderJoin(room, room.is_demo);
   } catch (caught) {
+    if (!isCurrentRoute(generation)) return;
     renderErrorPage('This room is unavailable', caught instanceof Error ? caught.message : 'Check the room code.', '/', 'Return home');
   }
 }
@@ -643,16 +656,17 @@ function renderErrorPage(title: string, message: string, href: string, action: s
 }
 
 async function renderRoute(shouldFocus = false): Promise<void> {
+  const generation = ++routeGeneration;
   cleanupRoute?.(); cleanupRoute = undefined;
   const path = location.pathname.replace(/\/+$/, '') || '/';
   if (path === '/') landing();
-  else if (path === '/demo') await demoPage();
+  else if (path === '/demo') await demoPage(generation);
   else if (path === '/privacy') legalPage('privacy');
   else if (path === '/terms') legalPage('terms');
-  else if (path.startsWith('/teach/')) await teacherPage(path.split('/')[2].toUpperCase());
-  else if (path.startsWith('/room/')) await roomPage(path.split('/')[2].toUpperCase());
+  else if (path.startsWith('/teach/')) await teacherPage(path.split('/')[2].toUpperCase(), generation);
+  else if (path.startsWith('/room/')) await roomPage(path.split('/')[2].toUpperCase(), generation);
   else renderErrorPage('This page is not in the room', 'Check the address or return to the lesson room home.', '/', 'Return home');
-  routeFocus(shouldFocus);
+  if (isCurrentRoute(generation)) routeFocus(shouldFocus);
 }
 
 window.addEventListener('popstate', () => void renderRoute(true));
