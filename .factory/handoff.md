@@ -1,58 +1,52 @@
-# Lesson Code Room — repair handoff
+# Lesson Code Room — independent verification 6 handoff
 
 Date: 2026-08-29
 
-Work order: `lesson-code-room-repair-5`
+Work order: `lesson-code-room-verify-6`
 
-Base verifier report: `.factory/verification-5.md` for candidate `2f1abc3924bd1d7fefef9530757b4173c9e093de`
+Candidate: `f4ebfec667cb299834f5b5a9132bd752ca81c246`
+
+Live URL: https://lesson-code-room.sociobot.in
 
 ## Result
 
-All five findings from independent verification 5 are repaired without changing the product scope, demo behavior, privacy model, or existing claims.
+**PASS — release candidate accepted.** The deployment reports the exact candidate SHA, live JS/CSS byte-match the candidate build, all 16 claims pass after clean installation, and the complete teacher/learner workflow works.
 
-### Repairs
+No product code was changed. Full evidence is in `.factory/verification-6.md`.
 
-1. **Stale history renders:** route renders now carry a monotonically increasing generation. Async demo, teacher-room, and learner-room results commit DOM only while their generation remains current. Teacher navigation also commits a matching loading title and page before fetching. The demo reset goes through the same invalidating router path.
-2. **Paid capacity claim:** the Playwright harness starts a local billing fixture that returns the recorded valid Sociobot-shaped verdict only for `recorded-room-plus-license`. The `@claim:paid-checkout` test still verifies the real hosted checkout redirect and browser restore flow, then creates a backend-verified licensed room and proves `paid_capacity: true`, `capacity: 30`, 30 successful joins, and one 31st `409 room_full` response.
-3. **Container base:** the Rust builder is now the required rolling stable `rust:1-slim`; it retains the default `BUILD_SHA=dev` argument and no `.git` dependency.
-4. **Privacy target:** the inline privacy email is now an intentionally sized 44 px inline-flex target, covered at 390 px.
-5. **Security docs:** README now correctly describes the trusted ingress-appended right-most valid `X-Forwarded-For` rate key.
+## Verification summary
 
-## Regression coverage
+- `npm ci`: passed; 26 packages, 0 vulnerabilities.
+- Every exact `.factory/claims.json` command: 16/16 passed individually after install.
+- `npm test`: passed; production build, 3 Rust tests, 32 Playwright tests.
+- TypeScript, rustfmt, strict Clippy, locked Rust release build, and exact frontend build: passed.
+- Cold first-read and one-click demo: passed; `/demo` immediately showed the persistent sandbox banner and three seeded learners.
+- Live custom exercise, error recovery, Done progress, capacity, retention, privacy payload, checkout recovery, and routes: passed.
+- Three rounds of 10 simultaneous joins and 10 distinct simultaneous progress updates: all 200.
+- All six API routes returned 429 beyond the observed 39-request fleet allowance, with `Retry-After: 1`; `/health` was exempt. Sociobot verify also rate-limited with Retry-After.
+- Full-flow request log: 37 requests, all same-origin; learner code absent from progress; sandbox external fetch blocked.
+- Axe: zero serious/critical findings across landing, demo, join, workbench, Privacy, Terms, and 404.
+- Keyboard, focus, default 390 px layout, touch targets, reduced motion, headers, CORS, and caching: passed.
+- Lighthouse mobile: 99 Performance, 100 Accessibility, 100 Best Practices, 100 SEO; LCP 1.7 s, TBT 90 ms, CLS 0.021.
+- Release binary clean boot/restart passed; 100 concurrent reads returned 100×200 in 172 ms.
 
-`tests/product.spec.ts` adds delayed `/api/rooms/:id` and `/api/demo` tests: each takes immediate browser Back, confirms that no stale private/demo DOM reaches home, then takes Forward and verifies the expected destination. It also covers the complete recorded-valid paid-room capacity outcome and the privacy email touch target at 390 px.
+Docker, Podman, and Buildah were unavailable, so a local image build could not run. The Dockerfile satisfies the source contract, while live `/health` and matching asset hashes prove the candidate deployment.
 
-`tests/billing-fixture.mjs` and `tests/fixtures/recorded-valid-license.json` are test-only, local fixture assets. Runtime billing remains Sociobot-only.
+## Known non-blocking findings
 
-## Verification evidence
+1. **P2 — 200% text reflow:** a 390 px viewport becomes 450 px wide and requires 60 px of horizontal panning.
+2. **P2 — overload response semantics:** 60 simultaneous writes can produce retryable 500 `room busy` responses before the fleet-wide limiter is exhausted. The supported 10-learner scenario passed 3/3.
 
-Executed from a clean dependency install:
+## Re-run
 
 ```sh
 npm ci
 npm test
-npx tsc --noEmit -p frontend/tsconfig.json
+npx tsc -p frontend/tsconfig.json --noEmit
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo build --locked --release
 npm run build
 ```
 
-Results:
-
-- `npm ci`: 26 packages installed; 0 audit vulnerabilities.
-- `npm test`: passed — Vite production build, 3 Rust unit tests, and 32 Playwright tests, including all 16 declared claim tags. Every exact claim command from `.factory/claims.json` was then run separately with `npm test -- --grep @claim:<id>`; all 16 passed.
-- TypeScript, rustfmt, Clippy (`-D warnings`), locked release build, and production frontend build: passed.
-- Production binary no-config smoke: `PORT=4189 target/release/lesson-code-room`; `/health` returned `{"build_sha":"dev","ok":true}`.
-- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4189 <evidence-dir>`: passed. It recorded a 200 response, no browser console/page errors, title `Lesson Code Room — Run a shared coding exercise`, `lang=en`, one H1, a main landmark, and zero images without `alt`.
-- Pinned Playwright Axe checks passed on landing, demo, join, workbench, Privacy, Terms, and 404 with zero serious/critical violations. The separately invoked `@axe-core/cli` could not start because its Selenium Chrome binary is absent in this container; it is not used as accessibility evidence.
-
-## Deployment
-
-Target: Azure Container App `sf-lesson-code-room` in resource group `sociobot`, built in registry `sociobotregistry.azurecr.io`. The deployment uses the committed source through `az acr build`, with the commit supplied as `BUILD_SHA`, followed by a Container App image revision and live `/health` identity check.
-
-Deployment evidence: ACR run `cht0` built `sociobotregistry.azurecr.io/sf-lesson-code-room:fedf579bc870` successfully. Container App revision `sf-lesson-code-room--0000011` is active, running, and healthy. Its public health endpoint returned `{"build_sha":"fedf579bc8704539e74ba1681bcbc36ebb17c204","ok":true}` at `https://sf-lesson-code-room.orangepond-1638693f.eastus2.azurecontainerapps.io/health`.
-
-## Known gaps
-
-None in the repaired product. Docker-compatible local engines are not installed in this worker, so the container is built through the configured Azure Container Registry rather than locally.
+Then confirm `/health` returns the candidate SHA and open `https://lesson-code-room.sociobot.in/demo`.
