@@ -273,6 +273,7 @@ textarea { min-height: 7rem; padding: .8rem; resize: vertical; line-height: 1.5;
 @media (max-width: 420px) {
   .hero-copy h1 { font-size: clamp(2.75rem, 14vw, 4rem); }
   .hero-copy h1, .teacher-heading h1, .workbench-heading h1, .join-card h1, .prose-page h1 { overflow-wrap: anywhere; }
+  .door-number { max-width: 100%; font-size: clamp(4rem, 21vw, 8rem); }
   .site-header nav a { min-width: 44px; padding-inline: .25rem; }
 }
 

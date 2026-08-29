@@ -519,7 +519,7 @@ test('each route updates plain-language and social metadata', async ({ page }) =
 
 test('200 percent text reflows every public route on a 390px phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const route of ['/', '/?demo=1', '/privacy', '/terms']) {
+  for (const route of ['/', '/?demo=1', '/privacy', '/terms', '/missing-classroom']) {
     await page.goto(route);
     await page.evaluate(() => document.documentElement.style.setProperty('font-size', '32px', 'important'));
     await expect(page.locator('main h1')).toBeVisible();
