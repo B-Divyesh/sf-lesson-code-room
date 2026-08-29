@@ -1,73 +1,36 @@
-# Lesson Code Room — polish 2 handoff
-
-> **Independent verifier result (2026-08-29): PASS for candidate
-> `b4abd34467f43e2436d9fe4dab70115ae1a6fc34` at
-> https://lesson-code-room.sociobot.in.** See
-> [`.factory/verification-8.md`](verification-8.md) for exact test, live
-> deployment, privacy, accessibility, rate-limit, and defect evidence.
+# Lesson Code Room — review 3 handoff
 
 Date: 2026-08-29  
-Primary repair commit: `5f6c09eb282f0e695d4f68d485d658fb5923ef24`  
-Production namespace correction: `6b7abd743ba0bd575c35b1afdfc6d2d0d261b101`
+Review commit: recorded after `ff9051f45aa4aa41497b775fd8255ed7dff700c4`
 
 ## Result
 
-The demo now uses an isolated tenant. Local and test runs hold it in memory.
-The deployed service uses the separate `lesson-code-room-demo` Blob container,
-so demo traffic can use any replica without touching the live-room container.
-Demo IDs use the `DEMO-` namespace. The first render still shows the realistic
-three-learner sample immediately.
+No product code was changed. The requested adversarial first-read review is in `.factory/review-3.md`.
 
-The new `demo-storage-isolation` and `demo-sample-data` entries complete the
-claim inventory. The older review fixes remain covered: first-read wording,
-metadata, real routing, legal/footer links, 404, focus movement, keyboard,
-200% text reflow, mobile targets, offline preview, privacy, and the persistent
-demo banner. Blob lease contention now gives a retryable 503 response instead
-of a 500.
+The review verdict is **FAIL** for one P2 copy issue: the designed 404 uses the metaphorical H1 “This page is not in the room.” Replace it with “Page not found” and add a regression assertion. Everything else reviewed passes, including first-read clarity, sample/demo isolation behaviour, current claims, routing, metadata, mobile reflow, and previous finding repairs.
 
-## Verification
+## Verification performed
 
-- `npm test` — pass: Vite build, 4 Rust tests, and 36 Playwright tests.
-- `npx tsc -p frontend/tsconfig.json --noEmit` — pass.
-- `cargo fmt --check` — pass.
-- `cargo clippy --all-targets -- -D warnings` — pass.
-- `cargo build --locked --release` — pass.
-- Fresh clone `/tmp/lesson-code-room-final-UM4Sx3`: `npm ci`, all 18 exact
-  commands in `.factory/claims.json`, the complete `npm test`, TypeScript,
-  formatting, clippy, and release build — pass.
-- Build budgets: JavaScript 31.01 KB raw / 9.72 KB gzip; CSS 18.92 KB raw /
-  4.95 KB gzip; bundled fonts 71.35 KB. No remote fonts or page trackers.
+- Fresh clone: `/tmp/lesson-code-room-review-3-mOKfX1`; `npm ci` passed with 0 vulnerabilities.
+- `npm test -- --grep '@claim:'` passed all 18 declared claim tests.
+- `npm test` passed: production Vite build, 4 Rust tests, and 36 Playwright tests.
+- `npx tsc -p frontend/tsconfig.json --noEmit`, `cargo fmt --all -- --check`, and `cargo clippy --all-targets --all-features -- -D warnings` passed.
+- Fresh live Chromium at mobile 390 × 844 and desktop 1440 × 900: first screen answers job, audience, and first action; no ordinary console errors; landing has no horizontal overflow.
+- Live one-click demo showed the populated three-learner sample before provision completed, the persistent demo banner, Reset demo, Start for real, separately named `DEMO-*` rooms, and a working reset. Browser request logging showed product-origin traffic only plus the preview's opaque sandbox origin.
+- Live route crawl checked `/`, `/demo`, `/privacy`, `/terms`, a 404, all discovered internal links, the checkout redirect, and Param Factory. Route titles, metadata, canonical/social fields, h1/main, responsive reflow, focus after navigation, legal/footer links, robots, sitemap, and favicon were checked.
 
-## Run and deploy
+## How to rerun
 
-Run `npm ci && npm test` for the complete local suite. For manual use, run
-`npm run build` and then `PORT=8080 cargo run`; open `/?demo=1`.
+```sh
+npm ci
+npm test
+npx tsc -p frontend/tsconfig.json --noEmit
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+```
 
-Deploy with `/opt/fleet/lib/deploy-container.sh lesson-code-room /work/repo Dockerfile 8080`.
-The app needs only `PORT`; live rooms choose managed-identity Blob storage,
-while a non-Azure boot falls back to SQLite.
+For manual verification, open <https://lesson-code-room.sociobot.in>, use **Try it with sample data**, and check the persistent demo treatment through the learner workbench.
 
-## Deployment and live cold-check
+## Known gap
 
-Deployed through the work-order container configuration. `GET /health` at
-<https://lesson-code-room.sociobot.in/health> returned build
-`6b7abd743ba0bd575c35b1afdfc6d2d0d261b101`.
-
-Cold Chromium checks at 390 px confirmed `/`, `/privacy`, `/terms`, and the
-real 404 have their expected status, route title, one H1, and no horizontal
-overflow. `/?demo=1` showed the banner, Reset demo, Start for real, and the
-three named sample learners. A live `POST /api/demo` returned
-`storage: "demo-blob"` with a `DEMO-` identifier; that learner link opened the
-screen-name form. `/opt/fleet/lib/verify-url.sh` passed against the landing
-page with no console errors and title/lang/main/alt checks. Screenshots:
-`/tmp/lesson-code-room-polish-2-landing.png`,
-`/tmp/lesson-code-room-polish-2-demo.png`, and
-`/tmp/lesson-code-room-polish-2-404.png`.
-
-The standalone axe CLI could not start its Selenium Chrome driver in this
-container. The product's Playwright Axe suite passed all public routes and the
-join/workbench states in `npm test`.
-
-## Known gaps
-
-None.
+The only open finding is `F-3-1` in `.factory/review-3.md`: use plain “Page not found” copy for the 404 H1.
