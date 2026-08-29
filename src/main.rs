@@ -47,6 +47,10 @@ const FACTORY_RUNTIME_IDENTITY_CLIENT_ID: &str = "ba10d5bc-6375-4325-8892-4c7a5b
 #[derive(Clone)]
 struct AppState {
     store: Store,
+    // Demo rooms never use the durable room store. They live only in this
+    // process, expire quickly, and carry a distinct ID prefix so the live
+    // store can never resolve them.
+    demo_store: DemoStore,
     rate: Arc<tokio::sync::Mutex<HashMap<String, RateWindow>>>,
     billing_base: String,
 }
@@ -55,6 +59,32 @@ struct AppState {
 enum Store {
     Sqlite(SqlitePool),
     Blob(BlobStore),
+}
+
+#[derive(Clone)]
+enum DemoStore {
+    Memory(Arc<tokio::sync::Mutex<HashMap<String, DemoRecord>>>),
+    Durable(Store),
+}
+
+impl DemoStore {
+    fn memory() -> Self {
+        Self::Memory(Arc::new(tokio::sync::Mutex::new(HashMap::new())))
+    }
+
+    fn storage_name(&self) -> &'static str {
+        match self {
+            Self::Memory(_) => "memory",
+            Self::Durable(_) => "demo-blob",
+        }
+    }
+}
+
+#[derive(Clone)]
+struct DemoRecord {
+    room: PublicRoom,
+    teacher_token: String,
+    participants: Vec<StoredParticipant>,
 }
 
 #[derive(Clone)]
@@ -97,10 +127,17 @@ impl IntoResponse for ApiError {
             "room_full" => StatusCode::CONFLICT,
             "forbidden" => StatusCode::FORBIDDEN,
             "expired" => StatusCode::GONE,
+            "room_busy" => StatusCode::SERVICE_UNAVAILABLE,
             "server_error" => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::BAD_REQUEST,
         };
-        (status, Json(self)).into_response()
+        let mut response = (status, Json(self)).into_response();
+        if status == StatusCode::SERVICE_UNAVAILABLE {
+            response
+                .headers_mut()
+                .insert(header::RETRY_AFTER, HeaderValue::from_static("1"));
+        }
+        response
     }
 }
 
@@ -190,6 +227,7 @@ struct ProgressCounts {
 struct DemoRoom {
     room: PublicRoom,
     teacher_token: String,
+    storage: &'static str,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -231,16 +269,34 @@ async fn main() {
 
     let (store, storage_config) = connect_store().await;
     purge_expired(&store).await;
+    // Azure replicas share a dedicated demo blob container. Local and test
+    // runs use process memory, so neither path can write into live storage.
+    let demo_store = match &store {
+        Store::Blob(blob) => {
+            let mut demo_blob = blob.clone();
+            demo_blob.container = "lesson-code-room-demo".to_string();
+            demo_blob
+                .ensure_container()
+                .await
+                .expect("connect isolated demo Azure Blob storage");
+            DemoStore::Durable(Store::Blob(demo_blob))
+        }
+        Store::Sqlite(_) => DemoStore::memory(),
+    };
     let cleanup_store = store.clone();
+    let cleanup_demo_store = demo_store.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(15 * 60));
         loop {
             interval.tick().await;
             purge_expired(&cleanup_store).await;
+            purge_expired_demo(&cleanup_demo_store).await;
         }
     });
+    let demo_storage = demo_store.storage_name();
     let state = AppState {
         store,
+        demo_store,
         rate: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
         billing_base,
     };
@@ -254,6 +310,7 @@ async fn main() {
         port,
         build_sha = BUILD_SHA,
         storage_config,
+        demo_storage,
         "lesson-code-room started"
     );
     axum::serve(
@@ -516,7 +573,10 @@ impl BlobStore {
             }
             tokio::time::sleep(Duration::from_millis(100 + attempt * 25)).await;
         }
-        Err(api_error("server_error", "The room is busy. Try again."))
+        Err(api_error(
+            "room_busy",
+            "The room is busy. Wait one second and try again.",
+        ))
     }
 
     async fn release_room_lease(&self, room_id: &str, lease_id: &str) {
@@ -630,7 +690,7 @@ async fn get_room(
     AxumPath(id): AxumPath<String>,
 ) -> Result<Json<PublicRoom>, ApiError> {
     Ok(Json(
-        find_room(&state.store, &normalize_room_id(&id)).await?,
+        find_room_for_request(&state, &normalize_room_id(&id)).await?,
     ))
 }
 
@@ -640,7 +700,7 @@ async fn join_room(
     Json(input): Json<JoinRoom>,
 ) -> Result<Json<JoinedRoom>, ApiError> {
     let room_id = normalize_room_id(&id);
-    let room = find_room(&state.store, &room_id).await?;
+    let room = find_room_for_request(&state, &room_id).await?;
     let name = input.name.trim();
     if name.is_empty() || name.chars().count() > 24 {
         return Err(api_error(
@@ -658,13 +718,7 @@ async fn join_room(
         joined_at: now,
         updated_at: now,
     };
-    add_participant(
-        &state.store,
-        &room,
-        participant.clone(),
-        learner_token.clone(),
-    )
-    .await?;
+    add_participant_for_request(&state, &room, participant.clone(), learner_token.clone()).await?;
     Ok(Json(JoinedRoom {
         participant,
         learner_token,
@@ -677,7 +731,7 @@ async fn update_progress(
     Json(input): Json<ProgressUpdate>,
 ) -> Result<Json<Participant>, ApiError> {
     let room_id = normalize_room_id(&id);
-    find_room(&state.store, &room_id).await?;
+    find_room_for_request(&state, &room_id).await?;
     if !matches!(input.status.as_str(), "ran" | "done") {
         return Err(api_error(
             "invalid_status",
@@ -685,14 +739,9 @@ async fn update_progress(
         ));
     }
     let now = unix_time();
-    let participant = update_participant(
-        &state.store,
-        &room_id,
-        &input.learner_token,
-        &input.status,
-        now,
-    )
-    .await?;
+    let participant =
+        update_participant_for_request(&state, &room_id, &input.learner_token, &input.status, now)
+            .await?;
     Ok(Json(participant))
 }
 
@@ -702,7 +751,7 @@ async fn get_progress(
     headers: HeaderMap,
 ) -> Result<Json<ProgressResponse>, ApiError> {
     let room_id = normalize_room_id(&id);
-    let expected = get_teacher_token(&state.store, &room_id).await?;
+    let expected = get_teacher_token_for_request(&state, &room_id).await?;
     let supplied = headers
         .get("x-teacher-token")
         .and_then(|value| value.to_str().ok())
@@ -713,7 +762,7 @@ async fn get_progress(
             "The teacher link is not valid for this room.",
         ));
     }
-    let participants = list_participants(&state.store, &room_id).await?;
+    let participants = list_participants_for_request(&state, &room_id).await?;
     let counts = ProgressCounts {
         joined: participants.iter().filter(|p| p.status == "joined").count(),
         ran: participants.iter().filter(|p| p.status == "ran").count(),
@@ -733,7 +782,7 @@ async fn get_progress(
 }
 
 async fn create_demo(State(state): State<AppState>) -> Result<Json<DemoRoom>, ApiError> {
-    purge_expired(&state.store).await;
+    purge_expired_demo(&state.demo_store).await;
     let input = CreateRoom {
         title: "Make the night sky respond".to_string(),
         instructions: "Change the button label and add one more star. Run the page, then mark yourself done when it looks right.".to_string(),
@@ -742,8 +791,7 @@ async fn create_demo(State(state): State<AppState>) -> Result<Json<DemoRoom>, Ap
         javascript: "const button = document.querySelector('#signal');\nbutton.addEventListener('click', () => {\n  document.querySelector('#reply').textContent = 'Signal received.';\n});".to_string(),
         license: None,
     };
-    let room = insert_room(&state.store, input, false, true).await?;
-    let teacher_token = get_teacher_token(&state.store, &room.id).await?;
+    let (room, teacher_token) = insert_demo_room(&state.demo_store, input).await?;
     let now = unix_time();
     for (index, (name, status)) in [
         ("Moss Finch", "done"),
@@ -760,12 +808,267 @@ async fn create_demo(State(state): State<AppState>) -> Result<Json<DemoRoom>, Ap
             joined_at: now - 180 + index as i64 * 30,
             updated_at: now,
         };
-        add_demo_participant(&state.store, &room.id, participant, random_token(24)).await?;
+        add_demo_participant(&state.demo_store, &room.id, participant, random_token(24)).await?;
     }
     Ok(Json(DemoRoom {
         room,
         teacher_token,
+        storage: state.demo_store.storage_name(),
     }))
+}
+
+fn is_demo_room_id(id: &str) -> bool {
+    id.starts_with("DEMO-")
+}
+
+async fn find_room_for_request(state: &AppState, id: &str) -> Result<PublicRoom, ApiError> {
+    if is_demo_room_id(id) {
+        find_demo_room(&state.demo_store, id).await
+    } else {
+        find_room(&state.store, id).await
+    }
+}
+
+async fn get_teacher_token_for_request(state: &AppState, id: &str) -> Result<String, ApiError> {
+    if is_demo_room_id(id) {
+        get_demo_teacher_token(&state.demo_store, id).await
+    } else {
+        get_teacher_token(&state.store, id).await
+    }
+}
+
+async fn list_participants_for_request(
+    state: &AppState,
+    id: &str,
+) -> Result<Vec<Participant>, ApiError> {
+    if is_demo_room_id(id) {
+        list_demo_participants(&state.demo_store, id).await
+    } else {
+        list_participants(&state.store, id).await
+    }
+}
+
+async fn add_participant_for_request(
+    state: &AppState,
+    room: &PublicRoom,
+    participant: Participant,
+    learner_token: String,
+) -> Result<(), ApiError> {
+    if is_demo_room_id(&room.id) {
+        add_demo_participant(&state.demo_store, &room.id, participant, learner_token).await
+    } else {
+        add_participant(&state.store, room, participant, learner_token).await
+    }
+}
+
+async fn update_participant_for_request(
+    state: &AppState,
+    room_id: &str,
+    learner_token: &str,
+    status: &str,
+    now: i64,
+) -> Result<Participant, ApiError> {
+    if is_demo_room_id(room_id) {
+        update_demo_participant(&state.demo_store, room_id, learner_token, status, now).await
+    } else {
+        update_participant(&state.store, room_id, learner_token, status, now).await
+    }
+}
+
+async fn insert_demo_room(
+    store: &DemoStore,
+    input: CreateRoom,
+) -> Result<(PublicRoom, String), ApiError> {
+    if let DemoStore::Durable(demo_store) = store {
+        let room = insert_room(demo_store, input, false, true).await?;
+        let teacher_token = get_teacher_token(demo_store, &room.id).await?;
+        return Ok((room, teacher_token));
+    }
+    let now = unix_time();
+    let DemoStore::Memory(rooms) = store else {
+        unreachable!()
+    };
+    let mut rooms = rooms.lock().await;
+    let id = loop {
+        let candidate = format!("DEMO-{}", random_room_code());
+        if !rooms.contains_key(&candidate) {
+            break candidate;
+        }
+    };
+    let room = PublicRoom {
+        id: id.clone(),
+        title: input.title.trim().to_string(),
+        instructions: input.instructions.trim().to_string(),
+        html: input.html,
+        css: input.css,
+        javascript: input.javascript,
+        capacity: FREE_CAPACITY,
+        is_demo: true,
+        expires_at: now + DEMO_TTL_SECONDS,
+    };
+    let teacher_token = random_token(32);
+    rooms.insert(
+        id,
+        DemoRecord {
+            room: room.clone(),
+            teacher_token: teacher_token.clone(),
+            participants: Vec::new(),
+        },
+    );
+    Ok((room, teacher_token))
+}
+
+async fn find_demo_room(store: &DemoStore, id: &str) -> Result<PublicRoom, ApiError> {
+    if let DemoStore::Durable(demo_store) = store {
+        return find_room(demo_store, id).await;
+    }
+    let DemoStore::Memory(rooms) = store else {
+        unreachable!()
+    };
+    let mut rooms = rooms.lock().await;
+    let Some(record) = rooms.get(id).cloned() else {
+        return Err(api_error(
+            "not_found",
+            "This demo room has ended. Open a fresh sample room.",
+        ));
+    };
+    if record.room.expires_at <= unix_time() {
+        rooms.remove(id);
+        return Err(api_error(
+            "expired",
+            "This demo room has ended. Open a fresh sample room.",
+        ));
+    }
+    Ok(record.room)
+}
+
+async fn get_demo_teacher_token(store: &DemoStore, id: &str) -> Result<String, ApiError> {
+    if let DemoStore::Durable(demo_store) = store {
+        return get_teacher_token(demo_store, id).await;
+    }
+    let room = find_demo_room(store, id).await?;
+    let DemoStore::Memory(rooms) = store else {
+        unreachable!()
+    };
+    let rooms = rooms.lock().await;
+    rooms
+        .get(&room.id)
+        .map(|record| record.teacher_token.clone())
+        .ok_or_else(|| {
+            api_error(
+                "not_found",
+                "This demo room has ended. Open a fresh sample room.",
+            )
+        })
+}
+
+async fn list_demo_participants(store: &DemoStore, id: &str) -> Result<Vec<Participant>, ApiError> {
+    if let DemoStore::Durable(demo_store) = store {
+        return list_participants(demo_store, id).await;
+    }
+    find_demo_room(store, id).await?;
+    let DemoStore::Memory(rooms) = store else {
+        unreachable!()
+    };
+    let rooms = rooms.lock().await;
+    let mut participants = rooms
+        .get(id)
+        .ok_or_else(|| {
+            api_error(
+                "not_found",
+                "This demo room has ended. Open a fresh sample room.",
+            )
+        })?
+        .participants
+        .iter()
+        .map(|stored| stored.participant.clone())
+        .collect::<Vec<_>>();
+    participants.sort_by_key(|participant| participant.joined_at);
+    Ok(participants)
+}
+
+async fn add_demo_participant(
+    store: &DemoStore,
+    room_id: &str,
+    participant: Participant,
+    learner_token: String,
+) -> Result<(), ApiError> {
+    if let DemoStore::Durable(demo_store) = store {
+        let room = find_room(demo_store, room_id).await?;
+        return add_participant(demo_store, &room, participant, learner_token).await;
+    }
+    let DemoStore::Memory(rooms) = store else {
+        unreachable!()
+    };
+    let mut rooms = rooms.lock().await;
+    let record = rooms.get_mut(room_id).ok_or_else(|| {
+        api_error(
+            "not_found",
+            "This demo room has ended. Open a fresh sample room.",
+        )
+    })?;
+    if record.room.expires_at <= unix_time() {
+        rooms.remove(room_id);
+        return Err(api_error(
+            "expired",
+            "This demo room has ended. Open a fresh sample room.",
+        ));
+    }
+    if record.participants.len() as i64 >= record.room.capacity {
+        return Err(api_error(
+            "room_full",
+            "This room is full. Ask the teacher to open another room.",
+        ));
+    }
+    record.participants.push(StoredParticipant {
+        participant,
+        learner_token,
+    });
+    Ok(())
+}
+
+async fn update_demo_participant(
+    store: &DemoStore,
+    room_id: &str,
+    learner_token: &str,
+    status: &str,
+    now: i64,
+) -> Result<Participant, ApiError> {
+    if let DemoStore::Durable(demo_store) = store {
+        return update_participant(demo_store, room_id, learner_token, status, now).await;
+    }
+    let DemoStore::Memory(rooms) = store else {
+        unreachable!()
+    };
+    let mut rooms = rooms.lock().await;
+    let record = rooms.get_mut(room_id).ok_or_else(|| {
+        api_error(
+            "not_found",
+            "This demo room has ended. Open a fresh sample room.",
+        )
+    })?;
+    if record.room.expires_at <= unix_time() {
+        rooms.remove(room_id);
+        return Err(api_error(
+            "expired",
+            "This demo room has ended. Open a fresh sample room.",
+        ));
+    }
+    let stored = record
+        .participants
+        .iter_mut()
+        .find(|stored| constant_time_eq(stored.learner_token.as_bytes(), learner_token.as_bytes()))
+        .ok_or_else(|| {
+            api_error(
+                "forbidden",
+                "This learner link is no longer active. Join the room again.",
+            )
+        })?;
+    if stored.participant.status != "done" {
+        stored.participant.status = status.to_string();
+    }
+    stored.participant.updated_at = now;
+    Ok(stored.participant.clone())
 }
 
 async fn insert_room(
@@ -952,35 +1255,6 @@ async fn add_participant(
             .await;
             blob.release_room_lease(&room.id, &lease).await;
             outcome
-        }
-    }
-}
-
-async fn add_demo_participant(
-    store: &Store,
-    room_id: &str,
-    participant: Participant,
-    learner_token: String,
-) -> Result<(), ApiError> {
-    match store {
-        Store::Sqlite(db) => {
-            sqlx::query("INSERT INTO participants (id, room_id, learner_token, name, status, joined_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-                .bind(&participant.id).bind(room_id).bind(learner_token).bind(&participant.name).bind(&participant.status).bind(participant.joined_at).bind(participant.updated_at)
-                .execute(db).await.map_err(db_error)?;
-            Ok(())
-        }
-        Store::Blob(blob) => {
-            let stored = StoredParticipant {
-                participant,
-                learner_token,
-            };
-            blob.put(
-                &participant_blob_path(room_id, &stored.participant.id),
-                &stored,
-                true,
-            )
-            .await?;
-            Ok(())
         }
     }
 }
@@ -1225,6 +1499,21 @@ async fn purge_expired(store: &Store) {
     }
 }
 
+async fn purge_expired_demo(store: &DemoStore) {
+    if let DemoStore::Durable(demo_store) = store {
+        purge_expired(demo_store).await;
+        return;
+    }
+    let now = unix_time();
+    let DemoStore::Memory(rooms) = store else {
+        unreachable!()
+    };
+    rooms
+        .lock()
+        .await
+        .retain(|_, record| record.room.expires_at > now);
+}
+
 async fn rate_limit(
     State(state): State<AppState>,
     ConnectInfo(address): ConnectInfo<SocketAddr>,
@@ -1335,6 +1624,16 @@ fn random_token(size: usize) -> String {
     URL_SAFE_NO_PAD.encode(bytes)
 }
 
+fn random_room_code() -> String {
+    const LETTERS: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ";
+    let mut bytes = [0u8; 6];
+    rand::rng().fill_bytes(&mut bytes);
+    bytes
+        .iter()
+        .map(|value| LETTERS[*value as usize % LETTERS.len()] as char)
+        .collect()
+}
+
 fn normalize_room_id(id: &str) -> String {
     id.trim().to_ascii_uppercase()
 }
@@ -1392,5 +1691,16 @@ mod tests {
         assert!(is_content_hashed_asset("/assets/index-BBeU5N0A.js"));
         assert!(!is_content_hashed_asset("/assets/classroom-hero.webp"));
         assert!(!is_content_hashed_asset("/assets/classroom-hero-900.webp"));
+    }
+
+    #[test]
+    fn room_busy_responses_are_retryable_not_server_errors() {
+        let response = api_error(
+            "room_busy",
+            "The room is busy. Wait one second and try again.",
+        )
+        .into_response();
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(response.headers().get(header::RETRY_AFTER).unwrap(), "1");
     }
 }

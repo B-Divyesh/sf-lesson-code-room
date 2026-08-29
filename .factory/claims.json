@@ -28,6 +28,20 @@
     "sandbox": "fresh /demo; reset and compare room links while checking seeded learners"
   },
   {
+    "id": "demo-storage-isolation",
+    "claim": "Demo activity uses a temporary sample store, separate from live rooms.",
+    "where": "/demo banner and .factory/demo.md",
+    "test": "npm test -- --grep @claim:demo-storage-isolation",
+    "sandbox": "create a live room, create and use a demo room, then assert its DEMO identifier and separate storage response while the live room remains available"
+  },
+  {
+    "id": "demo-sample-data",
+    "claim": "A sample room opens with Moss Finch (Done), Blue Comet (Ran code), and Quiet Fox (Joined).",
+    "where": "landing first screen and /demo",
+    "test": "npm test -- --grep @claim:demo-sample-data",
+    "sandbox": "delay the demo API response after one click and assert exactly the three named learner progress states on the immediately rendered sample"
+  },
+  {
     "id": "learner-reset",
     "claim": "A learner can reset all three edited files and the preview to the teacher's starter code.",
     "where": "README and learner workbench",

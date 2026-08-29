@@ -1,13 +1,13 @@
 # Landing copy audit
 
-Audit date: 2026-08-29 (polish 1). Counts split on whitespace. Code samples are sample data, not landing-page prose. No line exceeds 22 words, and no line contains a banned marketing word.
+Audit date: 2026-08-29 (polish 2). Counts split on whitespace. Code samples are sample data, not landing-page prose. No line exceeds 22 words, and no line contains a banned marketing word.
 
 | Landing text | Words | Result |
 | --- | ---: | --- |
 | Run one coding exercise together | 5 | Pass |
 | For remote teachers who need learners coding now, with clear progress and no student accounts. | 15 | Pass |
 | Try it with sample data | 5 | Pass |
-| A sample room opens with three learners. | 7 | Pass |
+| A sample room opens with three learners. | 7 | Pass — `demo-sample-data` |
 | No student accounts | 3 | Pass |
 | Rooms close after 24 hours | 5 | Pass |
 | Free for 10 learners | 4 | Pass |
@@ -49,7 +49,7 @@ Audit date: 2026-08-29 (polish 1). Counts split on whitespace. Code samples are 
 | Built by Param Factory | 4 | Pass |
 | Original generated classroom art | 4 | Pass |
 
-Removed the four non-informational eyebrows from the landing page. The sample action now opens `/?demo=1`, which immediately renders the populated sample teacher room.
+Removed the four non-informational eyebrows from the landing page. The sample action now opens `/?demo=1`, which immediately renders the populated sample teacher room. Its banner is backed by the `demo-storage-isolation` claim: all demo activity stays in a separate temporary demo store.
 
 ## Terminology
 
@@ -63,4 +63,4 @@ Removed the four non-informational eyebrows from the landing page. The sample ac
 | Learner state | progress |
 | Paid license | Room Plus |
 
-Catalog description: **Run one shared coding exercise and see who has tried it.** (10 words, 56 characters)
+Catalog description: **Run a shared coding exercise and see learner progress without student accounts.** (11 words, 75 characters)

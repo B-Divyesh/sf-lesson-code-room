@@ -18,7 +18,7 @@ test('landing page states the job and fits a phone', async ({ browser }) => {
   await context.close();
 });
 
-test('one click renders the populated isolated sample before its room request resolves', async ({ page }) => {
+test('@claim:demo-sample-data one click opens three named learner progress states before the demo request resolves', async ({ page }) => {
   let releaseResponse: (() => void) | undefined;
   let requestStarted!: () => void;
   const requestStartedPromise = new Promise<void>((resolve) => { requestStarted = resolve; });
@@ -37,9 +37,46 @@ test('one click renders the populated isolated sample before its room request re
   await expect(page.getByText('Moss Finch')).toBeVisible();
   await expect(page.getByText('Blue Comet')).toBeVisible();
   await expect(page.getByText('Quiet Fox')).toBeVisible();
+  await expect(page.locator('.participant')).toHaveCount(3);
+  await expect(page.locator('.participant').nth(0)).toContainText('Moss Finch');
+  await expect(page.locator('.participant').nth(0)).toContainText('Done');
+  await expect(page.locator('.participant').nth(1)).toContainText('Blue Comet');
+  await expect(page.locator('.participant').nth(1)).toContainText('Ran code');
+  await expect(page.locator('.participant').nth(2)).toContainText('Quiet Fox');
+  await expect(page.locator('.participant').nth(2)).toContainText('Joined');
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
   releaseResponse?.();
   await expect(page.getByLabel('Learner join link')).toBeVisible();
+});
+
+test('@claim:demo-storage-isolation demo activity uses a temporary isolated tenant, not the live room store', async ({ request }) => {
+  const live = await request.post('/api/rooms', { data: {
+    title: 'Durable room boundary', instructions: 'Keep this live room separate.', html: '<h1>Live room</h1>', css: '', javascript: '',
+  } });
+  expect(live.ok()).toBeTruthy();
+  const liveRoom = (await live.json()).room;
+
+  const created = await request.post('/api/demo', { data: {} });
+  expect(created.ok()).toBeTruthy();
+  const demo = await created.json();
+  expect(demo.storage).toBe('memory');
+  expect(demo.room.id).toMatch(/^DEMO-[A-Z]{6}$/);
+  expect(demo.room.is_demo).toBe(true);
+
+  const joined = await request.post(`/api/rooms/${demo.room.id}/join`, { data: { name: 'Isolation Kestrel' } });
+  expect(joined.ok()).toBeTruthy();
+  const participant = await joined.json();
+  const progressed = await request.post(`/api/rooms/${demo.room.id}/progress`, { data: { learner_token: participant.learner_token, status: 'ran' } });
+  expect(progressed.ok()).toBeTruthy();
+  expect((await progressed.json()).status).toBe('ran');
+
+  // A live room remains addressable by its own non-demo identifier; demo IDs
+  // select the separate process-memory tenant rather than the durable Store.
+  expect((await request.get(`/api/rooms/${liveRoom.id}`)).ok()).toBeTruthy();
+  const server = await readFile('src/main.rs', 'utf8');
+  expect(server).toContain('lesson-code-room-demo');
+  expect(server).toContain('DemoStore::memory()');
+  expect(server).not.toContain('insert_room(&state.store, input, false, true)');
 });
 
 test('@claim:anonymous-room learners join without an account and progress reaches the teacher', async ({ page, context }) => {

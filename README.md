@@ -16,7 +16,7 @@ Try the isolated sample room: <https://lesson-code-room.sociobot.in/demo>
 - See anonymous screen names move through three progress states.
 - Run learner code in a sandbox that blocks network requests.
 - Expire live rooms after 24 hours and demo rooms after two hours.
-- Open temporary sample data through `/demo` without changing live rooms.
+- Open temporary isolated sample data through `/demo` without changing live rooms.
 - Restore a Room Plus license through Sociobot billing. Room Plus costs $29 once and raises new rooms to 30 learners.
 
 ## Run locally

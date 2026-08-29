@@ -118,7 +118,7 @@ function landing(): void {
         <p class="hero-lead" data-claim="anonymous-room">For remote teachers who need learners coding now, with clear progress and no student accounts.</p>
         <div class="hero-action">
           <a class="button button-primary" href="/?demo=1" data-route>Try it with sample data</a>
-          <span>A sample room opens with three learners.</span>
+          <span data-claim="demo-sample-data">A sample room opens with three learners.</span>
         </div>
         <ul class="plain-facts" aria-label="Key facts">
           <li data-claim="anonymous-room">No student accounts</li>
@@ -363,7 +363,7 @@ function renderDemoPreview(): void {
 }
 
 function demoBanner(): string {
-  return `<aside class="demo-banner" aria-label="Demo mode" data-claim="demo-reset"><strong>Demo — sample data, nothing is saved</strong><div><button id="reset-demo" type="button">Reset demo</button><a href="/#create" data-route>Start for real</a></div></aside>`;
+  return `<aside class="demo-banner" aria-label="Demo mode" data-claim="demo-reset demo-storage-isolation"><strong>Demo — sample data, nothing is saved</strong><div><button id="reset-demo" type="button">Reset demo</button><a href="/#create" data-route>Start for real</a></div></aside>`;
 }
 
 function bindDemoBanner(): void {
@@ -703,7 +703,7 @@ function legalPage(kind: 'privacy' | 'terms'): void {
 
 function renderErrorPage(title: string, message: string, href: string, action: string): void {
   setMeta(`Not found — Lesson Code Room`, 'The requested lesson room or page could not be opened.', location.pathname);
-  shell(`<main id="main" class="error-page"><div class="door-number">404</div><p class="eyebrow">The classroom is dark</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><a class="button button-primary" href="${href}" data-route>${escapeHtml(action)}</a></main>`);
+  shell(`<main id="main" class="error-page"><div class="door-number">404</div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><a class="button button-primary" href="${href}" data-route>${escapeHtml(action)}</a></main>`);
 }
 
 async function renderRoute(shouldFocus = false): Promise<void> {
