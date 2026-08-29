@@ -1,6 +1,6 @@
 # Landing copy audit
 
-Audit date: 2026-08-29 (polish 2). Counts split on whitespace. Code samples are sample data, not landing-page prose. No line exceeds 22 words, and no line contains a banned marketing word.
+Audit date: 2026-08-29 (polish 3). Counts split on whitespace. Code samples are sample data, not landing-page prose. No line exceeds 22 words, and no line contains a banned marketing word.
 
 | Landing text | Words | Result |
 | --- | ---: | --- |
@@ -63,4 +63,14 @@ Removed the four non-informational eyebrows from the landing page. The sample ac
 | Learner state | progress |
 | Paid license | Room Plus |
 
-Catalog description: **Run a shared coding exercise and see learner progress without student accounts.** (11 words, 75 characters)
+## Error route
+
+| Error text | Words | Result |
+| --- | ---: | --- |
+| Page not found | 3 | Pass |
+| Check the address or return to the lesson room home. | 10 | Pass |
+| Return home | 2 | Pass |
+
+The former metaphorical 404 heading was replaced with the direct result, **Page not found**.
+
+Catalog description: **Run one shared coding exercise and see learner progress without student accounts.** (12 words, 77 characters)

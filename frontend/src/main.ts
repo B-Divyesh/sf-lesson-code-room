@@ -717,7 +717,7 @@ async function renderRoute(shouldFocus = false): Promise<void> {
   else if (path === '/terms') legalPage('terms');
   else if (path.startsWith('/teach/')) await teacherPage(path.split('/')[2].toUpperCase(), generation);
   else if (path.startsWith('/room/')) await roomPage(path.split('/')[2].toUpperCase(), generation);
-  else renderErrorPage('This page is not in the room', 'Check the address or return to the lesson room home.', '/', 'Return home');
+  else renderErrorPage('Page not found', 'Check the address or return to the lesson room home.', '/', 'Return home');
   if (isCurrentRoute(generation)) {
     routeFocus(shouldFocus);
     if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });

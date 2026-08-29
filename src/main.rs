@@ -1598,14 +1598,24 @@ fn is_content_hashed_asset(path: &str) -> bool {
     let Some(file) = path.strip_prefix("/assets/") else {
         return false;
     };
-    let Some((_, suffix)) = file.rsplit_once('-') else {
+    let Some((stem, extension)) = file.rsplit_once('.') else {
         return false;
     };
-    let hash = suffix.split('.').next().unwrap_or_default();
-    hash.len() >= 8
+    // Vite emits eight-character URL-safe base64 hashes. A hash can itself
+    // contain `-` (including as its first character), so splitting at the
+    // final dash incorrectly misses valid names such as `index--x8rlptg.js`.
+    // Public artwork also lives under /assets, but its web image extension is
+    // intentionally excluded because names such as classroom-hero-900.webp
+    // are stable rather than content hashed.
+    if !matches!(extension, "js" | "css" | "woff" | "woff2") || stem.len() < 9 {
+        return false;
+    }
+    let split = stem.len() - 8;
+    let (prefix, hash) = stem.split_at(split);
+    prefix.ends_with('-')
         && hash
             .chars()
-            .all(|character| character.is_ascii_alphanumeric())
+            .all(|character| character.is_ascii_alphanumeric() || matches!(character, '-' | '_'))
 }
 
 fn random_token(size: usize) -> String {
@@ -1679,6 +1689,11 @@ mod tests {
     #[test]
     fn only_content_hashed_assets_receive_immutable_caching() {
         assert!(is_content_hashed_asset("/assets/index-BBeU5N0A.js"));
+        assert!(is_content_hashed_asset("/assets/index--x8rlptg.js"));
+        assert!(is_content_hashed_asset("/assets/index-lGUaFF-C.css"));
+        assert!(is_content_hashed_asset(
+            "/assets/atkinson-hyperlegible-latin-400-normal-BrHNak5F.woff2"
+        ));
         assert!(!is_content_hashed_asset("/assets/classroom-hero.webp"));
         assert!(!is_content_hashed_asset("/assets/classroom-hero-900.webp"));
     }

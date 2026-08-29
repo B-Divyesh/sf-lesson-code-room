@@ -554,6 +554,14 @@ test('each route updates plain-language and social metadata', async ({ page }) =
   }
 });
 
+test('unknown routes explain the error in plain words', async ({ page }) => {
+  const response = await page.goto('/missing-classroom');
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page not found');
+  await expect(page.getByText('Check the address or return to the lesson room home.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Return home' })).toHaveAttribute('href', '/');
+});
+
 test('200 percent text reflows every public route on a 390px phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of ['/', '/?demo=1', '/privacy', '/terms', '/missing-classroom']) {

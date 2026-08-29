@@ -1,1 +1,1 @@
-Run a shared coding exercise and see learner progress without student accounts.
+Run one shared coding exercise and see learner progress without student accounts.
