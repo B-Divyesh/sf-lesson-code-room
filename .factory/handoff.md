@@ -41,7 +41,7 @@ npm run build
 Results:
 
 - `npm ci`: 26 packages installed; 0 audit vulnerabilities.
-- `npm test`: passed — Vite production build, 3 Rust unit tests, and 32 Playwright tests, including all 16 declared claim tags.
+- `npm test`: passed — Vite production build, 3 Rust unit tests, and 32 Playwright tests, including all 16 declared claim tags. Every exact claim command from `.factory/claims.json` was then run separately with `npm test -- --grep @claim:<id>`; all 16 passed.
 - TypeScript, rustfmt, Clippy (`-D warnings`), locked release build, and production frontend build: passed.
 - Production binary no-config smoke: `PORT=4189 target/release/lesson-code-room`; `/health` returned `{"build_sha":"dev","ok":true}`.
 - `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4189 <evidence-dir>`: passed. It recorded a 200 response, no browser console/page errors, title `Lesson Code Room — Run a shared coding exercise`, `lang=en`, one H1, a main landmark, and zero images without `alt`.
