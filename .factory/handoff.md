@@ -51,6 +51,8 @@ Results:
 
 Target: Azure Container App `sf-lesson-code-room` in resource group `sociobot`, built in registry `sociobotregistry.azurecr.io`. The deployment uses the committed source through `az acr build`, with the commit supplied as `BUILD_SHA`, followed by a Container App image revision and live `/health` identity check.
 
+Deployment evidence: ACR run `cht0` built `sociobotregistry.azurecr.io/sf-lesson-code-room:fedf579bc870` successfully. Container App revision `sf-lesson-code-room--0000011` is active, running, and healthy. Its public health endpoint returned `{"build_sha":"fedf579bc8704539e74ba1681bcbc36ebb17c204","ok":true}` at `https://sf-lesson-code-room.orangepond-1638693f.eastus2.azurecontainerapps.io/health`.
+
 ## Known gaps
 
 None in the repaired product. Docker-compatible local engines are not installed in this worker, so the container is built through the configured Azure Container Registry rather than locally.
