@@ -16,6 +16,21 @@ const starter = {
   javascript: `document.querySelector('#hello').addEventListener('click', () => {\n  document.querySelector('#message').textContent = 'Hello received.';\n});`,
 };
 
+// This is intentionally a local rendering fixture, not a room identifier or
+// stored room. It gives the one-click demo its useful first paint while the
+// separately provisioned, temporary demo room is being created.
+const demoPreview: Room = {
+  id: 'SAMPLE',
+  title: 'Make the night sky respond',
+  instructions: 'Change the button label and add one more star. Run the page, then mark yourself done when it looks right.',
+  html: `<main class="sky-card">\n  <p class="eyebrow">Tonight’s signal</p>\n  <h1>Good evening, coders.</h1>\n  <div id="stars" aria-label="Three stars">✦ ✦ ✦</div>\n  <button id="signal">Send a signal</button>\n  <p id="reply" aria-live="polite"></p>\n</main>`,
+  css: `body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #07151f; color: #f7efd9; font: 18px system-ui; }\n.sky-card { width: min(32rem, 80vw); padding: 3rem; border: 1px solid #31576b; background: #102936; box-shadow: 0 24px 80px #0008; }\n.eyebrow { color: #8cdcb3; text-transform: uppercase; letter-spacing: .12em; }\n#stars { color: #ffc857; font-size: 2.5rem; letter-spacing: .35em; }\nbutton { min-height: 44px; margin-top: 1rem; padding: .6rem 1rem; border: 0; background: #ffc857; color: #201503; font-weight: 700; cursor: pointer; }`,
+  javascript: `const button = document.querySelector('#signal');\nbutton.addEventListener('click', () => {\n  document.querySelector('#reply').textContent = 'Signal received.';\n});`,
+  capacity: 10,
+  is_demo: true,
+  expires_at: 0,
+};
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]!);
 }
@@ -24,6 +39,10 @@ function setMeta(title: string, description: string, path: string): void {
   document.title = title;
   document.querySelector<HTMLMetaElement>('meta[name="description"]')!.content = description;
   document.querySelector<HTMLLinkElement>('link[rel="canonical"]')!.href = `https://lesson-code-room.sociobot.in${path}`;
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')!.content = title;
+  document.querySelector<HTMLMetaElement>('meta[property="og:description"]')!.content = description;
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')!.content = title;
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')!.content = description;
 }
 
 function header(): string {
@@ -62,7 +81,8 @@ function bindNavigation(): void {
     link.addEventListener('click', (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      navigate(new URL(link.href).pathname + new URL(link.href).search);
+      const target = new URL(link.href);
+      navigate(target.pathname + target.search + target.hash);
     });
   });
 }
@@ -94,11 +114,10 @@ function landing(): void {
   shell(`<main id="main">
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">One room. One exercise. Start teaching.</p>
         <h1>Run one coding exercise together</h1>
         <p class="hero-lead" data-claim="anonymous-room">For remote teachers who need learners coding now, with clear progress and no student accounts.</p>
         <div class="hero-action">
-          <a class="button button-primary" href="/demo" data-route>Try it with sample data</a>
+          <a class="button button-primary" href="/?demo=1" data-route>Try it with sample data</a>
           <span>A sample room opens with three learners.</span>
         </div>
         <ul class="plain-facts" aria-label="Key facts">
@@ -112,13 +131,12 @@ function landing(): void {
           <source media="(max-width: 700px)" srcset="/assets/classroom-hero-900.webp" />
           <img src="/assets/classroom-hero.webp" width="1536" height="1024" alt="A quiet coding classroom at dusk, with ten lit laptops facing a teacher desk." fetchpriority="high" decoding="async" />
         </picture>
-        <figcaption>See the room, not private screens.</figcaption>
+        <figcaption data-claim="teacher-report-limits">Teachers see screen names and Joined, Ran code, or Done.</figcaption>
       </figure>
     </section>
 
     <section class="create-section" id="create" aria-labelledby="create-title">
       <div class="section-intro">
-        <p class="eyebrow">The real first step</p>
         <h2 id="create-title">Set one exercise</h2>
         <p data-claim="custom-room">Use the starter or paste your own HTML, CSS, and JavaScript. Learners each get an editable copy.</p>
       </div>
@@ -138,7 +156,6 @@ function landing(): void {
 
     <section class="how-section" aria-labelledby="how-title">
       <div class="section-intro">
-        <p class="eyebrow">A short teaching loop</p>
         <h2 id="how-title">How the room works</h2>
       </div>
       <ol class="steps">
@@ -150,7 +167,6 @@ function landing(): void {
 
     <section class="limits-section" aria-labelledby="limits-title">
       <div>
-        <p class="eyebrow">A room, not a watchtower</p>
         <h2 id="limits-title">Teach without surveillance</h2>
         <p data-claim="teacher-report-limits">Teachers see screen names and three progress states. They do not get grades or detailed activity reports.</p>
       </div>
@@ -300,7 +316,7 @@ async function demoPage(generation: number): Promise<void> {
   cleanupRoute?.();
   cleanupRoute = undefined;
   setMeta('Demo — Lesson Code Room', 'Try a sample coding room with three learner progress states. Demo data is temporary and separate.', '/demo');
-  shell(`<main id="main" class="loading-page"><h1>Opening the sample room</h1><div class="lamp-loader" aria-hidden="true"></div><p>This takes one short moment.</p></main>`, demoBanner());
+  renderDemoPreview();
   try {
     const result = await request<{ room: Room; teacher_token: string }>('/api/demo', { method: 'POST', body: '{}' });
     if (!isCurrentRoute(generation)) return;
@@ -311,8 +327,43 @@ async function demoPage(generation: number): Promise<void> {
   }
 }
 
+function renderDemoPreview(): void {
+  shell(`<main id="main" class="teacher-page" aria-busy="true">
+    <section class="teacher-heading">
+      <div>
+        <p class="eyebrow">Sample teacher view</p>
+        <h1>${escapeHtml(demoPreview.title)}</h1>
+        <p>${escapeHtml(demoPreview.instructions)}</p>
+      </div>
+      <div class="join-link-panel">
+        <span>Share this learner link</span>
+        <p class="small-note" role="status">Setting up the sample learner link…</p>
+        <small>The learner link will appear here.</small>
+      </div>
+    </section>
+    <section class="signal-board" aria-labelledby="signals-title">
+      <div class="signal-heading">
+        <div><p class="eyebrow">Live signals</p><h2 id="signals-title">Learner progress</h2></div>
+        <p>Sample data</p>
+      </div>
+      <div class="count-strip" aria-label="Progress totals">
+        <div><strong>3</strong><span>in room</span></div>
+        <div><strong>2</strong><span>ran code</span></div>
+        <div><strong>1</strong><span>done</span></div>
+        <div><strong>10</strong><span>room limit</span></div>
+      </div>
+      <div class="participant-list" aria-label="Sample learner progress">
+        <div class="participant"><span class="signal-dot signal-done" aria-hidden="true"></span><strong>Moss Finch</strong><span>Done</span></div>
+        <div class="participant"><span class="signal-dot signal-ran" aria-hidden="true"></span><strong>Blue Comet</strong><span>Ran code</span></div>
+        <div class="participant"><span class="signal-dot" aria-hidden="true"></span><strong>Quiet Fox</strong><span>Joined</span></div>
+      </div>
+    </section>
+  </main>`, demoBanner());
+  bindDemoBanner();
+}
+
 function demoBanner(): string {
-  return `<aside class="demo-banner" aria-label="Demo mode" data-claim="demo-reset"><strong>Demo — sample data, nothing is saved</strong><div><button id="reset-demo" type="button">Reset demo</button><a href="/#create">Start for real</a></div></aside>`;
+  return `<aside class="demo-banner" aria-label="Demo mode" data-claim="demo-reset"><strong>Demo — sample data, nothing is saved</strong><div><button id="reset-demo" type="button">Reset demo</button><a href="/#create" data-route>Start for real</a></div></aside>`;
 }
 
 function bindDemoBanner(): void {
@@ -636,7 +687,7 @@ function legalPage(kind: 'privacy' | 'terms'): void {
       <h2>Payments</h2><p data-claim="paid-checkout">Sociobot hosts the Room Plus checkout. This site stores the license token and its latest verification result in your browser.</p>
       <h2>What pages do not load</h2><p><span data-claim="no-tracking">Lesson Code Room pages load no advertising trackers.</span> <span data-claim="product-scope">Camera and microphone access are blocked.</span></p>
       <h2>Service safety</h2><p data-claim="rate-limit">API request bursts are limited. A limited request says when to retry.</p>
-      <h2>Questions</h2><p>Email <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with a room code if you need help.</p>
+      <h2>Questions</h2><p>Email <a class="contact-link" href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with a room code if you need help.</p>
     </main>`);
   } else {
     setMeta('Terms — Lesson Code Room', 'Terms for using Lesson Code Room and buying the one-time Room Plus license.', '/terms');
@@ -659,14 +710,18 @@ async function renderRoute(shouldFocus = false): Promise<void> {
   const generation = ++routeGeneration;
   cleanupRoute?.(); cleanupRoute = undefined;
   const path = location.pathname.replace(/\/+$/, '') || '/';
-  if (path === '/') landing();
+  if (path === '/' && new URLSearchParams(location.search).get('demo') === '1') await demoPage(generation);
+  else if (path === '/') landing();
   else if (path === '/demo') await demoPage(generation);
   else if (path === '/privacy') legalPage('privacy');
   else if (path === '/terms') legalPage('terms');
   else if (path.startsWith('/teach/')) await teacherPage(path.split('/')[2].toUpperCase(), generation);
   else if (path.startsWith('/room/')) await roomPage(path.split('/')[2].toUpperCase(), generation);
   else renderErrorPage('This page is not in the room', 'Check the address or return to the lesson room home.', '/', 'Return home');
-  if (isCurrentRoute(generation)) routeFocus(shouldFocus);
+  if (isCurrentRoute(generation)) {
+    routeFocus(shouldFocus);
+    if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
 }
 
 window.addEventListener('popstate', () => void renderRoute(true));

@@ -46,7 +46,7 @@ Vite runs on <http://localhost:5173> and proxies `/api` to the Rust server.
 npm test
 ```
 
-This exact command builds `dist/`, runs Rust unit tests, starts the production server on port 4174, and runs Playwright claim and accessibility tests. Playwright is pinned to 1.58.2.
+This command builds `dist/`, runs Rust tests, and starts the production server. It then runs Playwright claim and accessibility tests on port 4174. Playwright is pinned to 1.58.2.
 
 Run one documented claim:
 
@@ -64,7 +64,7 @@ docker run --rm -p 8080:8080 lesson-code-room
 curl http://localhost:8080/health
 ```
 
-The image runs as a non-root user, listens on `PORT` (default `8080`), and serves the built frontend from the same process. In the factory container environment it uses its managed identity to store room records in the dedicated shared Azure Blob container, so a learner and teacher can reach different replicas safely. Local development and explicit `DATABASE_URL` test runs use SQLite. No storage secret is baked into the image.
+The image runs as a non-root user, listens on `PORT` (default `8080`), and serves the built frontend from the same process. In the factory container, the service uses its managed identity for the shared room store. Teacher and learner requests can reach different replicas safely. Local development and explicit `DATABASE_URL` test runs use SQLite. No storage secret is baked into the image.
 
 ## Data and security
 

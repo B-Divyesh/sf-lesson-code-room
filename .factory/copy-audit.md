@@ -1,10 +1,9 @@
 # Landing copy audit
 
-Audit date: 2026-08-28. Counts split on whitespace. Code samples are sample data, not landing-page prose. No line exceeds 22 words, and no line contains a banned marketing word.
+Audit date: 2026-08-29 (polish 1). Counts split on whitespace. Code samples are sample data, not landing-page prose. No line exceeds 22 words, and no line contains a banned marketing word.
 
 | Landing text | Words | Result |
 | --- | ---: | --- |
-| One room. One exercise. Start teaching. | 6 | Pass |
 | Run one coding exercise together | 5 | Pass |
 | For remote teachers who need learners coding now, with clear progress and no student accounts. | 15 | Pass |
 | Try it with sample data | 5 | Pass |
@@ -12,8 +11,7 @@ Audit date: 2026-08-28. Counts split on whitespace. Code samples are sample data
 | No student accounts | 3 | Pass |
 | Rooms close after 24 hours | 5 | Pass |
 | Free for 10 learners | 4 | Pass |
-| See the room, not private screens. | 6 | Pass |
-| The real first step | 4 | Pass |
+| Teachers see screen names and Joined, Ran code, or Done. | 10 | Pass |
 | Set one exercise | 3 | Pass |
 | Use the starter or paste your own HTML, CSS, and JavaScript. | 11 | Pass |
 | Learners each get an editable copy. | 6 | Pass |
@@ -24,7 +22,6 @@ Audit date: 2026-08-28. Counts split on whitespace. Code samples are sample data
 | JavaScript | 1 | Pass |
 | Create room and join link | 5 | Pass |
 | Your room and starter code close after 24 hours. | 9 | Pass |
-| A short teaching loop | 4 | Pass |
 | How the room works | 4 | Pass |
 | Create the exercise | 3 | Pass |
 | Set one task and starter page before the call. | 9 | Pass |
@@ -32,7 +29,6 @@ Audit date: 2026-08-28. Counts split on whitespace. Code samples are sample data
 | Learners choose a screen name and start in their browser. | 10 | Pass |
 | Watch simple progress | 3 | Pass |
 | See who joined, ran code, or marked the task done. | 10 | Pass |
-| A room, not a watchtower | 5 | Pass |
 | Teach without surveillance | 3 | Pass |
 | Teachers see screen names and three progress states. | 8 | Pass |
 | They do not get grades or detailed activity reports. | 9 | Pass |
@@ -52,6 +48,8 @@ Audit date: 2026-08-28. Counts split on whitespace. Code samples are sample data
 | Terms | 1 | Pass |
 | Built by Param Factory | 4 | Pass |
 | Original generated classroom art | 4 | Pass |
+
+Removed the four non-informational eyebrows from the landing page. The sample action now opens `/?demo=1`, which immediately renders the populated sample teacher room.
 
 ## Terminology
 

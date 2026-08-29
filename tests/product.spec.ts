@@ -18,6 +18,30 @@ test('landing page states the job and fits a phone', async ({ browser }) => {
   await context.close();
 });
 
+test('one click renders the populated isolated sample before its room request resolves', async ({ page }) => {
+  let releaseResponse: (() => void) | undefined;
+  let requestStarted!: () => void;
+  const requestStartedPromise = new Promise<void>((resolve) => { requestStarted = resolve; });
+  await page.route('**/api/demo', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    requestStarted();
+    await new Promise<void>((resolve) => { releaseResponse = resolve; });
+    await route.continue();
+  });
+
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Try it with sample data' }).click();
+  await expect(page).toHaveURL('/?demo=1');
+  await requestStartedPromise;
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Make the night sky respond');
+  await expect(page.getByText('Moss Finch')).toBeVisible();
+  await expect(page.getByText('Blue Comet')).toBeVisible();
+  await expect(page.getByText('Quiet Fox')).toBeVisible();
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  releaseResponse?.();
+  await expect(page.getByLabel('Learner join link')).toBeVisible();
+});
+
 test('@claim:anonymous-room learners join without an account and progress reaches the teacher', async ({ page, context }) => {
   await page.goto('/demo');
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
@@ -106,7 +130,8 @@ test('a delayed demo load cannot overwrite Back, and Forward opens a fresh demo'
   await page.getByRole('link', { name: 'Demo' }).click();
   await expect(page).toHaveURL('/demo');
   await requestStartedPromise;
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Opening the sample room');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Make the night sky respond');
+  await expect(page.getByText('Moss Finch')).toBeVisible();
 
   await page.goBack();
   await expect(page).toHaveURL('/');
@@ -471,6 +496,35 @@ test('every annotated visitor claim is inventoried and every inventory id is pub
   await page.getByRole('button', { name: 'Join the exercise' }).click();
   await collect();
   for (const id of inventory) expect(published.has(id), `claim ${id} is not attached to published copy`).toBe(true);
+});
+
+test('each route updates plain-language and social metadata', async ({ page }) => {
+  const expectations = [
+    ['/', 'Lesson Code Room — Run a shared coding exercise', 'https://lesson-code-room.sociobot.in/'],
+    ['/?demo=1', 'Demo — Lesson Code Room', 'https://lesson-code-room.sociobot.in/demo'],
+    ['/privacy', 'Privacy — Lesson Code Room', 'https://lesson-code-room.sociobot.in/privacy'],
+    ['/terms', 'Terms — Lesson Code Room', 'https://lesson-code-room.sociobot.in/terms'],
+    ['/missing-classroom', 'Not found — Lesson Code Room', 'https://lesson-code-room.sociobot.in/missing-classroom'],
+  ] as const;
+  for (const [route, title, canonical] of expectations) {
+    await page.goto(route);
+    await expect(page).toHaveTitle(title);
+    expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe(canonical);
+    expect(await page.locator('meta[property="og:title"]').getAttribute('content')).toBe(title);
+    expect(await page.locator('meta[name="twitter:title"]').getAttribute('content')).toBe(title);
+    expect(await page.locator('meta[property="og:description"]').getAttribute('content')).toBe(await page.locator('meta[name="description"]').getAttribute('content'));
+    expect(await page.locator('meta[name="twitter:description"]').getAttribute('content')).toBe(await page.locator('meta[name="description"]').getAttribute('content'));
+  }
+});
+
+test('200 percent text reflows every public route on a 390px phone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const route of ['/', '/?demo=1', '/privacy', '/terms']) {
+    await page.goto(route);
+    await page.evaluate(() => document.documentElement.style.setProperty('font-size', '32px', 'important'));
+    await expect(page.locator('main h1')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), `${route} must not require horizontal panning`).toBeLessThanOrEqual(390);
+  }
 });
 
 test('landing, demo, and legal pages have no serious accessibility findings', async ({ page }) => {

@@ -2,10 +2,10 @@
 
 ## Entry point
 
-- Local: `http://localhost:8080/demo`
-- Production: `https://lesson-code-room.sociobot.in/demo`
+- Local: `http://localhost:8080/?demo=1` (also `/demo`)
+- Production: `https://lesson-code-room.sociobot.in/?demo=1` (also `/demo`)
 
-No account, key, or setup is required. A direct visit sends `POST /api/demo`, which creates a random demo room with a two-hour TTL.
+No account, key, or setup is required. The sample teacher room renders immediately, then `POST /api/demo` creates a random demo room with a two-hour TTL and replaces the temporary learner link.
 
 ## Sample data
 
