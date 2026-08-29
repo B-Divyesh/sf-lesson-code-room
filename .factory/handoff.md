@@ -26,7 +26,7 @@ of a 500.
 - `cargo fmt --check` — pass.
 - `cargo clippy --all-targets -- -D warnings` — pass.
 - `cargo build --locked --release` — pass.
-- Fresh clone `/tmp/lesson-code-room-clean-ivf5Te`: `npm ci`, all 18 exact
+- Fresh clone `/tmp/lesson-code-room-final-UM4Sx3`: `npm ci`, all 18 exact
   commands in `.factory/claims.json`, the complete `npm test`, TypeScript,
   formatting, clippy, and release build — pass.
 - Build budgets: JavaScript 31.01 KB raw / 9.72 KB gzip; CSS 18.92 KB raw /
