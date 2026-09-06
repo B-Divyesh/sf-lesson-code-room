@@ -10,6 +10,7 @@ ARG BUILD_SHA=dev
 ENV BUILD_SHA=${BUILD_SHA}
 WORKDIR /source
 COPY Cargo.toml Cargo.lock ./
+COPY build.rs ./
 COPY migrations ./migrations
 COPY src ./src
 RUN cargo build --locked --release
