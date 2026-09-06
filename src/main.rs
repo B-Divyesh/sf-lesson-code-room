@@ -21,7 +21,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
     FromRow, SqlitePool,
 };
 use tokio::signal;
@@ -312,6 +312,10 @@ async fn connect_sqlite(database_url: &str) -> SqlitePool {
     }
     let options = SqliteConnectOptions::from_str(database_url)
         .expect("parse SQLite database URL")
+        // WAL relies on a shared-memory lock file that Azure Files does not
+        // provide reliably. A rollback journal is safe for this one-replica
+        // service and keeps the durable mount usable after restarts.
+        .journal_mode(SqliteJournalMode::Delete)
         .busy_timeout(Duration::from_secs(15));
     // Azure Files plus SQLite is deliberately single-writer here. One pool
     // connection prevents local contention while the replica bound protects
