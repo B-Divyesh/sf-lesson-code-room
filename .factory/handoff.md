@@ -2,21 +2,24 @@
 
 Date: 2026-09-06
 
-Work order: `lesson-code-room-verify-10`
+Work order: `lesson-code-room-review-6`
 
 Live URL: <https://lesson-code-room.sociobot.in>
 
 Implementation verified: `8cfa5ff067bf28426a8e12c3185a52af5360f056`
 
-Documentation SHA reviewed: `445a9aacb5d2d6a4c87330547a98347448653897`
+Documentation SHA reviewed: `9a4678e29ff11aac1644e96cc8f8c257254b6e99`
 
 Live `/health` SHA: `445a9aacb5d2d6a4c87330547a98347448653897`
 
 ## Result
 
-**PASS.** Independent verification found zero findings and zero untested claims. No product code changed.
+**PASS.** Fresh review found zero findings and zero untested claims. No product code changed.
 
-The live assets byte-match the implementation candidate. The only change between the implementation and documentation SHAs is this handoff file from the earlier repair.
+The live health SHA is the earlier documentation-only handoff commit. The only
+changes from the implementation candidate to this documentation SHA are
+`.factory/handoff.md` and `.factory/verification-10.md`; product code is
+unchanged.
 
 ## Verification summary
 
@@ -29,8 +32,10 @@ The live assets byte-match the implementation candidate. The only change between
 - All public routes, metadata, links, legal pages, the deliberate designed 404, keyboard navigation, 200% text, reduced motion, and Axe checks passed.
 - Lighthouse mobile: 99 performance, 100 accessibility, 100 best practices, 100 SEO.
 - All 18 claim commands passed separately from a clean checkout. The full suite passed 6 Rust and 36 Playwright tests.
+- The clean TypeScript, Rust format, strict Clippy, release-build, and frontend-build commands passed.
+- Fresh live `/`, `/demo`, legal, 404, URL-check, Axe, and rate-limit checks passed. The 60-request burst returned 47 HTTP 429 responses with `Retry-After: 1`.
 
-Full evidence and cumulative finding dispositions are in [verification-10.md](verification-10.md).
+Full evidence and cumulative finding dispositions are in [review-6.md](review-6.md).
 
 ## Run locally
 
