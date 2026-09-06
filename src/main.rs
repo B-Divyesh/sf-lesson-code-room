@@ -3,6 +3,7 @@ use std::{
     env,
     net::{IpAddr, SocketAddr},
     path::{Path, PathBuf},
+    str::FromStr,
     sync::Arc,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -19,7 +20,10 @@ use axum::{
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use sqlx::{sqlite::SqlitePoolOptions, FromRow, SqlitePool};
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+    FromRow, SqlitePool,
+};
 use tokio::signal;
 use tower_http::{
     services::{ServeDir, ServeFile},
@@ -306,16 +310,34 @@ async fn connect_sqlite(database_url: &str) -> SqlitePool {
             std::fs::File::create(path).expect("create sqlite database");
         }
     }
+    let options = SqliteConnectOptions::from_str(database_url)
+        .expect("parse SQLite database URL")
+        .busy_timeout(Duration::from_secs(15));
+    // Azure Files plus SQLite is deliberately single-writer here. One pool
+    // connection prevents local contention while the replica bound protects
+    // the durable file from cross-process writes.
     let db = SqlitePoolOptions::new()
-        .max_connections(8)
-        .connect(database_url)
+        .max_connections(1)
+        .connect_with(options)
         .await
         .expect("connect sqlite");
-    sqlx::migrate!()
-        .run(&db)
-        .await
-        .expect("run database migrations");
-    db
+    for attempt in 0..6 {
+        match sqlx::migrate!().run(&db).await {
+            Ok(()) => return db,
+            Err(error)
+                if error
+                    .to_string()
+                    .to_ascii_lowercase()
+                    .contains("database is locked")
+                    && attempt < 5 =>
+            {
+                warn!(attempt, "SQLite migration is busy; retrying");
+                tokio::time::sleep(Duration::from_secs(attempt + 1)).await;
+            }
+            Err(error) => panic!("run database migrations: {error}"),
+        }
+    }
+    unreachable!("migration retry loop either returns or panics")
 }
 
 fn build_app(state: AppState, static_dir: &str) -> Router {
