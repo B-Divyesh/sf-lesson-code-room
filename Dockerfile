@@ -7,13 +7,12 @@ RUN npm run build
 
 FROM rust:1-slim AS rust-builder
 ARG BUILD_SHA=dev
-ENV BUILD_SHA=${BUILD_SHA}
 WORKDIR /source
 COPY Cargo.toml Cargo.lock ./
 COPY build.rs ./
 COPY migrations ./migrations
 COPY src ./src
-RUN cargo build --locked --release
+RUN BUILD_SHA="$BUILD_SHA" cargo build --locked --release
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update \
