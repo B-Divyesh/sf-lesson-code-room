@@ -21,7 +21,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteLockingMode, SqlitePoolOptions},
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
     FromRow, SqlitePool,
 };
 use tokio::signal;
@@ -316,11 +316,10 @@ async fn connect_sqlite(database_url: &str) -> SqlitePool {
     let options = SqliteConnectOptions::from_str(database_url)
         .expect("parse SQLite database URL")
         // Azure Files does not reliably provide SQLite's normal POSIX byte
-        // locks. The service is explicitly one replica, so unix-excl is safe
-        // here and avoids those network-lock failures. A rollback journal
-        // keeps the durable file recoverable if the process stops mid-write.
-        .vfs("unix-excl")
-        .locking_mode(SqliteLockingMode::Exclusive)
+        // locks. unix-dotfile uses lock files instead, so it works on the
+        // mounted share and also coordinates the short overlap during a
+        // managed restart. A rollback journal keeps the file recoverable.
+        .vfs("unix-dotfile")
         .journal_mode(SqliteJournalMode::Delete)
         .busy_timeout(Duration::from_secs(15));
     // Azure Files plus SQLite is deliberately single-writer here. One pool
