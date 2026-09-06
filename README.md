@@ -29,7 +29,7 @@ npm run build
 PORT=8080 cargo run
 ```
 
-Open <http://localhost:8080>. The server uses SQLite at `/data/lesson-code-room.db` when the durable `/data` mount exists. Otherwise it creates `data/lesson-code-room.db` in the current directory. Supplying `DATABASE_URL` selects another SQLite file for isolated tests.
+Open <http://localhost:8080>. The server uses SQLite at `/data/lesson-code-room-v2.db` when the durable `/data` mount exists. Otherwise it creates `data/lesson-code-room-v2.db` in the current directory. Supplying `DATABASE_URL` selects another SQLite file for isolated tests.
 
 For split frontend development:
 

@@ -291,9 +291,12 @@ async fn connect_store() -> (SqlitePool, &'static str) {
 
 fn default_database_path(data_dir: &Path) -> PathBuf {
     if data_dir.is_dir() {
-        data_dir.join("lesson-code-room.db")
+        // `lesson-code-room.db` belonged to the earlier Blob-backed release.
+        // Keep that locked legacy file intact; new durable room state starts in
+        // a distinct SQLite file on the same fleet-mounted `/data` share.
+        data_dir.join("lesson-code-room-v2.db")
     } else {
-        PathBuf::from("data/lesson-code-room.db")
+        PathBuf::from("data/lesson-code-room-v2.db")
     }
 }
 
@@ -1195,7 +1198,7 @@ mod tests {
         ));
         std::fs::create_dir_all(&root).unwrap();
         let path = default_database_path(&root);
-        assert_eq!(path, root.join("lesson-code-room.db"));
+        assert_eq!(path, root.join("lesson-code-room-v2.db"));
 
         let url = sqlite_url(&path);
         let first = connect_sqlite(&url).await;
@@ -1224,7 +1227,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&missing);
         assert_eq!(
             default_database_path(&missing),
-            PathBuf::from("data/lesson-code-room.db")
+            PathBuf::from("data/lesson-code-room-v2.db")
         );
     }
 }
