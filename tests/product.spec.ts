@@ -54,12 +54,16 @@ test('@claim:demo-storage-isolation demo activity uses a temporary isolated tena
     title: 'Durable room boundary', instructions: 'Keep this live room separate.', html: '<h1>Live room</h1>', css: '', javascript: '',
   } });
   expect(live.ok()).toBeTruthy();
-  const liveRoom = (await live.json()).room;
+  const liveRoom = await live.json();
+  const before = await request.get(`/api/rooms/${liveRoom.room.id}/progress`, {
+    headers: { 'x-teacher-token': liveRoom.teacher_token },
+  });
+  expect(before.ok()).toBeTruthy();
+  expect((await before.json()).counts).toEqual({ joined: 0, ran: 0, done: 0 });
 
   const created = await request.post('/api/demo', { data: {} });
   expect(created.ok()).toBeTruthy();
   const demo = await created.json();
-  expect(demo.storage).toBe('memory');
   expect(demo.room.id).toMatch(/^DEMO-[A-Z]{6}$/);
   expect(demo.room.is_demo).toBe(true);
 
@@ -70,13 +74,12 @@ test('@claim:demo-storage-isolation demo activity uses a temporary isolated tena
   expect(progressed.ok()).toBeTruthy();
   expect((await progressed.json()).status).toBe('ran');
 
-  // A live room remains addressable by its own non-demo identifier; demo IDs
-  // select the separate process-memory tenant rather than the durable Store.
-  expect((await request.get(`/api/rooms/${liveRoom.id}`)).ok()).toBeTruthy();
-  const server = await readFile('src/main.rs', 'utf8');
-  expect(server).toContain('lesson-code-room-demo');
-  expect(server).toContain('DemoStore::memory()');
-  expect(server).not.toContain('insert_room(&state.store, input, false, true)');
+  // The activity in a demo must not alter a separately-created live room.
+  const after = await request.get(`/api/rooms/${liveRoom.room.id}/progress`, {
+    headers: { 'x-teacher-token': liveRoom.teacher_token },
+  });
+  expect(after.ok()).toBeTruthy();
+  expect((await after.json()).counts).toEqual({ joined: 0, ran: 0, done: 0 });
 });
 
 test('@claim:anonymous-room learners join without an account and progress reaches the teacher', async ({ page, context }) => {
@@ -663,16 +666,6 @@ test('terms name the merchant of record and refund effect', async ({ page }) => 
   await page.goto('/terms');
   await expect(page.getByText(/Sociobot and Dodo are the merchant of record/)).toBeVisible();
   await expect(page.getByText(/Refunds are handled there and revoke the license/)).toBeVisible();
-});
-
-test('container defaults to the shared durable store instead of replica-local SQLite', async () => {
-  const [dockerfile, server] = await Promise.all([
-    readFile('Dockerfile', 'utf8'),
-    readFile('src/main.rs', 'utf8'),
-  ]);
-  expect(dockerfile).not.toMatch(/^ENV DATABASE_URL=/m);
-  expect(server).toContain('managed-identity Azure Blob storage (shared)');
-  expect(server).toContain('Store::Blob(store)');
 });
 
 test('hashed production assets use the immutable cache policy', async ({ page, request }) => {

@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     env,
     net::{IpAddr, SocketAddr},
-    path::Path,
+    path::{Path, PathBuf},
     sync::Arc,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -40,13 +40,9 @@ const DEMO_TTL_SECONDS: i64 = 2 * 60 * 60;
 const RATE_LIMIT_PER_REPLICA: u32 = 13;
 const RATE_WINDOW: Duration = Duration::from_secs(1);
 const MAX_RATE_KEYS: usize = 4_096;
-// The factory deployment attaches this one user-assigned identity to every product container.
-// Client IDs are public identifiers, not credentials; the platform issues the actual short-lived token.
-const FACTORY_RUNTIME_IDENTITY_CLIENT_ID: &str = "ba10d5bc-6375-4325-8892-4c7a5be500ca";
-
 #[derive(Clone)]
 struct AppState {
-    store: Store,
+    store: SqlitePool,
     // Demo rooms never use the durable room store. They live only in this
     // process, expire quickly, and carry a distinct ID prefix so the live
     // store can never resolve them.
@@ -56,15 +52,8 @@ struct AppState {
 }
 
 #[derive(Clone)]
-enum Store {
-    Sqlite(SqlitePool),
-    Blob(BlobStore),
-}
-
-#[derive(Clone)]
 enum DemoStore {
     Memory(Arc<tokio::sync::Mutex<HashMap<String, DemoRecord>>>),
-    Durable(Store),
 }
 
 impl DemoStore {
@@ -75,7 +64,6 @@ impl DemoStore {
     fn storage_name(&self) -> &'static str {
         match self {
             Self::Memory(_) => "memory",
-            Self::Durable(_) => "demo-blob",
         }
     }
 }
@@ -85,28 +73,6 @@ struct DemoRecord {
     room: PublicRoom,
     teacher_token: String,
     participants: Vec<StoredParticipant>,
-}
-
-#[derive(Clone)]
-struct BlobStore {
-    client: reqwest::Client,
-    base_url: String,
-    container: String,
-    identity_endpoint: String,
-    identity_header: String,
-    access_token: Arc<tokio::sync::Mutex<Option<BlobAccessToken>>>,
-}
-
-#[derive(Clone)]
-struct BlobAccessToken {
-    value: String,
-    expires_at: i64,
-}
-
-#[derive(Deserialize)]
-struct ManagedIdentityResponse {
-    access_token: String,
-    expires_on: String,
 }
 
 struct RateWindow {
@@ -231,13 +197,6 @@ struct DemoRoom {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-struct StoredRoom {
-    #[serde(flatten)]
-    room: PublicRoom,
-    teacher_token: String,
-}
-
-#[derive(Clone, Serialize, Deserialize)]
 struct StoredParticipant {
     #[serde(flatten)]
     participant: Participant,
@@ -269,20 +228,9 @@ async fn main() {
 
     let (store, storage_config) = connect_store().await;
     purge_expired(&store).await;
-    // Azure replicas share a dedicated demo blob container. Local and test
-    // runs use process memory, so neither path can write into live storage.
-    let demo_store = match &store {
-        Store::Blob(blob) => {
-            let mut demo_blob = blob.clone();
-            demo_blob.container = "lesson-code-room-demo".to_string();
-            demo_blob
-                .ensure_container()
-                .await
-                .expect("connect isolated demo Azure Blob storage");
-            DemoStore::Durable(Store::Blob(demo_blob))
-        }
-        Store::Sqlite(_) => DemoStore::memory(),
-    };
+    // Demo rooms are deliberately process-memory-only. They are independent
+    // of the durable SQLite room store and disappear on a process restart.
+    let demo_store = DemoStore::memory();
     let cleanup_store = store.clone();
     let cleanup_demo_store = demo_store.clone();
     tokio::spawn(async move {
@@ -322,30 +270,31 @@ async fn main() {
     .expect("serve app");
 }
 
-async fn connect_store() -> (Store, &'static str) {
+async fn connect_store() -> (SqlitePool, &'static str) {
     if let Ok(database_url) = env::var("DATABASE_URL") {
         let db = connect_sqlite(&database_url).await;
-        return (Store::Sqlite(db), "supplied SQLite URL (local/test)");
+        return (db, "supplied SQLite URL");
     }
-    match (env::var("IDENTITY_ENDPOINT"), env::var("IDENTITY_HEADER")) {
-        (Ok(identity_endpoint), Ok(identity_header)) => {
-            let store = BlobStore::new(identity_endpoint, identity_header)
-                .await
-                .expect("connect shared Azure Blob storage");
-            (
-                Store::Blob(store),
-                "managed-identity Azure Blob storage (shared)",
-            )
-        }
-        _ => {
-            // A developer running the binary outside Azure still gets a useful local room.
-            let db = connect_sqlite("sqlite://data/lesson-code-room.db").await;
-            (
-                Store::Sqlite(db),
-                "local SQLite fallback (no managed identity)",
-            )
-        }
+    let path = default_database_path(Path::new("/data"));
+    let storage_config = if path.is_absolute() {
+        "SQLite /data mount"
+    } else {
+        "local SQLite fallback (/data unavailable)"
+    };
+    let database_url = sqlite_url(&path);
+    (connect_sqlite(&database_url).await, storage_config)
+}
+
+fn default_database_path(data_dir: &Path) -> PathBuf {
+    if data_dir.is_dir() {
+        data_dir.join("lesson-code-room.db")
+    } else {
+        PathBuf::from("data/lesson-code-room.db")
     }
+}
+
+fn sqlite_url(path: &Path) -> String {
+    format!("sqlite://{}", path.display())
 }
 
 async fn connect_sqlite(database_url: &str) -> SqlitePool {
@@ -367,271 +316,6 @@ async fn connect_sqlite(database_url: &str) -> SqlitePool {
         .await
         .expect("run database migrations");
     db
-}
-
-impl BlobStore {
-    async fn new(identity_endpoint: String, identity_header: String) -> Result<Self, ApiError> {
-        let store = Self {
-            client: reqwest::Client::new(),
-            base_url: "https://sociobotblob.blob.core.windows.net".to_string(),
-            container: "lesson-code-room".to_string(),
-            identity_endpoint,
-            identity_header,
-            access_token: Arc::new(tokio::sync::Mutex::new(None)),
-        };
-        store.ensure_container().await?;
-        Ok(store)
-    }
-
-    async fn token(&self) -> Result<String, ApiError> {
-        if let Some(token) = self.access_token.lock().await.clone() {
-            if token.expires_at > unix_time() + 60 {
-                return Ok(token.value);
-            }
-        }
-        let response = self
-            .client
-            .get(&self.identity_endpoint)
-            .query(&[
-                ("api-version", "2019-08-01"),
-                ("resource", "https://storage.azure.com/"),
-                ("client_id", FACTORY_RUNTIME_IDENTITY_CLIENT_ID),
-            ])
-            .header("X-IDENTITY-HEADER", &self.identity_header)
-            .send()
-            .await
-            .map_err(blob_error)?;
-        if !response.status().is_success() {
-            warn!(status = %response.status(), "managed identity token request failed");
-            return Err(api_error(
-                "server_error",
-                "Shared room storage is unavailable. Try again.",
-            ));
-        }
-        let token = response
-            .json::<ManagedIdentityResponse>()
-            .await
-            .map_err(blob_error)?;
-        let expires_at = token
-            .expires_on
-            .parse::<i64>()
-            .unwrap_or_else(|_| unix_time() + 300);
-        *self.access_token.lock().await = Some(BlobAccessToken {
-            value: token.access_token.clone(),
-            expires_at,
-        });
-        Ok(token.access_token)
-    }
-
-    fn url(&self, path: &str) -> String {
-        format!("{}/{}/{}", self.base_url, self.container, path)
-    }
-
-    async fn request(
-        &self,
-        method: reqwest::Method,
-        path: &str,
-        query: &[(&str, &str)],
-    ) -> Result<reqwest::RequestBuilder, ApiError> {
-        let token = self.token().await?;
-        Ok(self
-            .client
-            .request(method, self.url(path))
-            .query(query)
-            .header("authorization", format!("Bearer {token}"))
-            .header("x-ms-date", httpdate::fmt_http_date(SystemTime::now()))
-            .header("x-ms-version", "2023-11-03"))
-    }
-
-    async fn ensure_container(&self) -> Result<(), ApiError> {
-        let response = self
-            .request(reqwest::Method::PUT, "", &[("restype", "container")])
-            .await?
-            .header(header::CONTENT_LENGTH, "0")
-            .body(Vec::new())
-            .send()
-            .await
-            .map_err(blob_error)?;
-        if response.status().is_success() || response.status() == reqwest::StatusCode::CONFLICT {
-            Ok(())
-        } else {
-            warn!(status = %response.status(), "could not create shared room container");
-            Err(api_error(
-                "server_error",
-                "Shared room storage is unavailable. Try again.",
-            ))
-        }
-    }
-
-    async fn get<T: for<'de> Deserialize<'de>>(&self, path: &str) -> Result<Option<T>, ApiError> {
-        let response = self
-            .request(reqwest::Method::GET, path, &[])
-            .await?
-            .send()
-            .await
-            .map_err(blob_error)?;
-        if response.status() == reqwest::StatusCode::NOT_FOUND {
-            return Ok(None);
-        }
-        if !response.status().is_success() {
-            return Err(blob_status_error(response.status()));
-        }
-        response.json::<T>().await.map(Some).map_err(blob_error)
-    }
-
-    async fn put<T: Serialize>(
-        &self,
-        path: &str,
-        value: &T,
-        only_if_new: bool,
-    ) -> Result<bool, ApiError> {
-        let bytes = serde_json::to_vec(value)
-            .map_err(|_| api_error("server_error", "The room could not be updated. Try again."))?;
-        let mut request = self
-            .request(reqwest::Method::PUT, path, &[])
-            .await?
-            .header("x-ms-blob-type", "BlockBlob")
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(bytes);
-        if only_if_new {
-            request = request.header("if-none-match", "*");
-        }
-        let response = request.send().await.map_err(blob_error)?;
-        if response.status().is_success() {
-            Ok(true)
-        } else if response.status() == reqwest::StatusCode::PRECONDITION_FAILED {
-            Ok(false)
-        } else {
-            Err(blob_status_error(response.status()))
-        }
-    }
-
-    async fn list(&self, prefix: &str) -> Result<Vec<String>, ApiError> {
-        let response = self
-            .request(
-                reqwest::Method::GET,
-                "",
-                &[
-                    ("restype", "container"),
-                    ("comp", "list"),
-                    ("prefix", prefix),
-                ],
-            )
-            .await?
-            .send()
-            .await
-            .map_err(blob_error)?;
-        if !response.status().is_success() {
-            return Err(blob_status_error(response.status()));
-        }
-        let body = response.text().await.map_err(blob_error)?;
-        Ok(extract_blob_names(&body))
-    }
-
-    async fn delete(&self, path: &str) -> Result<(), ApiError> {
-        let response = self
-            .request(reqwest::Method::DELETE, path, &[])
-            .await?
-            .send()
-            .await
-            .map_err(blob_error)?;
-        if response.status().is_success() || response.status() == reqwest::StatusCode::NOT_FOUND {
-            Ok(())
-        } else {
-            Err(blob_status_error(response.status()))
-        }
-    }
-
-    async fn acquire_room_lease(&self, room_id: &str) -> Result<String, ApiError> {
-        for attempt in 0..30 {
-            let response = self
-                .request(
-                    reqwest::Method::PUT,
-                    &room_blob_path(room_id),
-                    &[("comp", "lease")],
-                )
-                .await?
-                .header("x-ms-lease-action", "acquire")
-                .header("x-ms-lease-duration", "15")
-                .header(header::CONTENT_LENGTH, "0")
-                .body(Vec::new())
-                .send()
-                .await
-                .map_err(blob_error)?;
-            if response.status().is_success() {
-                return response
-                    .headers()
-                    .get("x-ms-lease-id")
-                    .and_then(|value| value.to_str().ok())
-                    .map(str::to_string)
-                    .ok_or_else(|| {
-                        api_error("server_error", "The room could not be updated. Try again.")
-                    });
-            }
-            if response.status() != reqwest::StatusCode::CONFLICT {
-                return Err(blob_status_error(response.status()));
-            }
-            tokio::time::sleep(Duration::from_millis(100 + attempt * 25)).await;
-        }
-        Err(api_error(
-            "room_busy",
-            "The room is busy. Wait one second and try again.",
-        ))
-    }
-
-    async fn release_room_lease(&self, room_id: &str, lease_id: &str) {
-        if let Ok(request) = self
-            .request(
-                reqwest::Method::PUT,
-                &room_blob_path(room_id),
-                &[("comp", "lease")],
-            )
-            .await
-        {
-            if let Err(error) = request
-                .header("x-ms-lease-action", "release")
-                .header("x-ms-lease-id", lease_id)
-                .header(header::CONTENT_LENGTH, "0")
-                .body(Vec::new())
-                .send()
-                .await
-            {
-                warn!(%error, "could not release room lease");
-            }
-        }
-    }
-}
-
-fn room_blob_path(room_id: &str) -> String {
-    format!("rooms/{room_id}.json")
-}
-
-fn participant_blob_path(room_id: &str, participant_id: &str) -> String {
-    format!("rooms/{room_id}/participants/{participant_id}.json")
-}
-
-fn extract_blob_names(xml: &str) -> Vec<String> {
-    xml.match_indices("<Name>")
-        .filter_map(|(start, _)| {
-            let value_start = start + "<Name>".len();
-            xml[value_start..]
-                .find("</Name>")
-                .map(|end| xml[value_start..value_start + end].to_string())
-        })
-        .collect()
-}
-
-fn blob_error(error: reqwest::Error) -> ApiError {
-    warn!(%error, "shared blob storage request failed");
-    api_error(
-        "server_error",
-        "Shared room storage is unavailable. Try again.",
-    )
-}
-
-fn blob_status_error(status: reqwest::StatusCode) -> ApiError {
-    warn!(%status, "shared blob storage returned an error");
-    api_error("server_error", "The room could not be updated. Try again.")
 }
 
 fn build_app(state: AppState, static_dir: &str) -> Router {
@@ -879,15 +563,8 @@ async fn insert_demo_room(
     store: &DemoStore,
     input: CreateRoom,
 ) -> Result<(PublicRoom, String), ApiError> {
-    if let DemoStore::Durable(demo_store) = store {
-        let room = insert_room(demo_store, input, false, true).await?;
-        let teacher_token = get_teacher_token(demo_store, &room.id).await?;
-        return Ok((room, teacher_token));
-    }
     let now = unix_time();
-    let DemoStore::Memory(rooms) = store else {
-        unreachable!()
-    };
+    let DemoStore::Memory(rooms) = store;
     let mut rooms = rooms.lock().await;
     let id = loop {
         let candidate = format!("DEMO-{}", random_room_code());
@@ -919,12 +596,7 @@ async fn insert_demo_room(
 }
 
 async fn find_demo_room(store: &DemoStore, id: &str) -> Result<PublicRoom, ApiError> {
-    if let DemoStore::Durable(demo_store) = store {
-        return find_room(demo_store, id).await;
-    }
-    let DemoStore::Memory(rooms) = store else {
-        unreachable!()
-    };
+    let DemoStore::Memory(rooms) = store;
     let mut rooms = rooms.lock().await;
     let Some(record) = rooms.get(id).cloned() else {
         return Err(api_error(
@@ -943,13 +615,8 @@ async fn find_demo_room(store: &DemoStore, id: &str) -> Result<PublicRoom, ApiEr
 }
 
 async fn get_demo_teacher_token(store: &DemoStore, id: &str) -> Result<String, ApiError> {
-    if let DemoStore::Durable(demo_store) = store {
-        return get_teacher_token(demo_store, id).await;
-    }
     let room = find_demo_room(store, id).await?;
-    let DemoStore::Memory(rooms) = store else {
-        unreachable!()
-    };
+    let DemoStore::Memory(rooms) = store;
     let rooms = rooms.lock().await;
     rooms
         .get(&room.id)
@@ -963,13 +630,8 @@ async fn get_demo_teacher_token(store: &DemoStore, id: &str) -> Result<String, A
 }
 
 async fn list_demo_participants(store: &DemoStore, id: &str) -> Result<Vec<Participant>, ApiError> {
-    if let DemoStore::Durable(demo_store) = store {
-        return list_participants(demo_store, id).await;
-    }
     find_demo_room(store, id).await?;
-    let DemoStore::Memory(rooms) = store else {
-        unreachable!()
-    };
+    let DemoStore::Memory(rooms) = store;
     let rooms = rooms.lock().await;
     let mut participants = rooms
         .get(id)
@@ -993,13 +655,7 @@ async fn add_demo_participant(
     participant: Participant,
     learner_token: String,
 ) -> Result<(), ApiError> {
-    if let DemoStore::Durable(demo_store) = store {
-        let room = find_room(demo_store, room_id).await?;
-        return add_participant(demo_store, &room, participant, learner_token).await;
-    }
-    let DemoStore::Memory(rooms) = store else {
-        unreachable!()
-    };
+    let DemoStore::Memory(rooms) = store;
     let mut rooms = rooms.lock().await;
     let record = rooms.get_mut(room_id).ok_or_else(|| {
         api_error(
@@ -1034,12 +690,7 @@ async fn update_demo_participant(
     status: &str,
     now: i64,
 ) -> Result<Participant, ApiError> {
-    if let DemoStore::Durable(demo_store) = store {
-        return update_participant(demo_store, room_id, learner_token, status, now).await;
-    }
-    let DemoStore::Memory(rooms) = store else {
-        unreachable!()
-    };
+    let DemoStore::Memory(rooms) = store;
     let mut rooms = rooms.lock().await;
     let record = rooms.get_mut(room_id).ok_or_else(|| {
         api_error(
@@ -1072,239 +723,71 @@ async fn update_demo_participant(
 }
 
 async fn insert_room(
-    store: &Store,
+    store: &SqlitePool,
     input: CreateRoom,
     licensed: bool,
     demo: bool,
 ) -> Result<PublicRoom, ApiError> {
-    match store {
-        Store::Sqlite(db) => insert_room_sqlite(db, input, licensed, demo).await,
-        Store::Blob(blob) => {
-            let id = unique_room_id_blob(blob, demo).await?;
-            let now = unix_time();
-            let room = PublicRoom {
-                id: id.clone(),
-                title: input.title.trim().to_string(),
-                instructions: input.instructions.trim().to_string(),
-                html: input.html,
-                css: input.css,
-                javascript: input.javascript,
-                capacity: if licensed {
-                    PAID_CAPACITY
-                } else {
-                    FREE_CAPACITY
-                },
-                is_demo: demo,
-                expires_at: now
-                    + if demo {
-                        DEMO_TTL_SECONDS
-                    } else {
-                        ROOM_TTL_SECONDS
-                    },
-            };
-            let stored = StoredRoom {
-                room: room.clone(),
-                teacher_token: random_token(32),
-            };
-            if blob.put(&room_blob_path(&id), &stored, true).await? {
-                Ok(room)
-            } else {
-                Err(api_error(
-                    "server_error",
-                    "A room code could not be created. Try again.",
-                ))
-            }
-        }
-    }
+    insert_room_sqlite(store, input, licensed, demo).await
 }
 
-async fn find_room(store: &Store, id: &str) -> Result<PublicRoom, ApiError> {
-    match store {
-        Store::Sqlite(db) => find_room_sqlite(db, id).await,
-        Store::Blob(blob) => {
-            let room = blob
-                .get::<StoredRoom>(&room_blob_path(id))
-                .await?
-                .ok_or_else(|| {
-                    api_error(
-                        "not_found",
-                        "This room does not exist. Check the six-letter room code.",
-                    )
-                })?;
-            if room.room.expires_at <= unix_time() {
-                return Err(api_error(
-                    "expired",
-                    "This room has expired. Ask the teacher to create a new room.",
-                ));
-            }
-            Ok(room.room)
-        }
-    }
+async fn find_room(store: &SqlitePool, id: &str) -> Result<PublicRoom, ApiError> {
+    find_room_sqlite(store, id).await
 }
 
-async fn get_teacher_token(store: &Store, id: &str) -> Result<String, ApiError> {
-    match store {
-        Store::Sqlite(db) => get_teacher_token_sqlite(db, id).await,
-        Store::Blob(blob) => {
-            let room = blob
-                .get::<StoredRoom>(&room_blob_path(id))
-                .await?
-                .ok_or_else(|| {
-                    api_error("not_found", "This room does not exist or has expired.")
-                })?;
-            if room.room.expires_at <= unix_time() {
-                return Err(api_error(
-                    "not_found",
-                    "This room does not exist or has expired.",
-                ));
-            }
-            Ok(room.teacher_token)
-        }
-    }
+async fn get_teacher_token(store: &SqlitePool, id: &str) -> Result<String, ApiError> {
+    get_teacher_token_sqlite(store, id).await
 }
 
-async fn unique_room_id_blob(blob: &BlobStore, demo: bool) -> Result<String, ApiError> {
-    for _ in 0..8 {
-        let code = random_room_code();
-        let id = if demo { format!("DEMO-{code}") } else { code };
-        if blob
-            .get::<StoredRoom>(&room_blob_path(&id))
-            .await?
-            .is_none()
-        {
-            return Ok(id);
-        }
-    }
-    Err(api_error(
-        "server_error",
-        "A room code could not be created. Try again.",
-    ))
-}
-
-async fn list_participants(store: &Store, room_id: &str) -> Result<Vec<Participant>, ApiError> {
-    match store {
-        Store::Sqlite(db) => sqlx::query_as::<_, Participant>("SELECT id, name, status, joined_at, updated_at FROM participants WHERE room_id = ? ORDER BY joined_at ASC")
-            .bind(room_id).fetch_all(db).await.map_err(db_error),
-        Store::Blob(blob) => {
-            let mut participants = Vec::new();
-            for path in blob.list(&format!("rooms/{room_id}/participants/")).await? {
-                if let Some(stored) = blob.get::<StoredParticipant>(&path).await? {
-                    participants.push(stored.participant);
-                }
-            }
-            participants.sort_by_key(|participant| participant.joined_at);
-            Ok(participants)
-        }
-    }
+async fn list_participants(
+    store: &SqlitePool,
+    room_id: &str,
+) -> Result<Vec<Participant>, ApiError> {
+    sqlx::query_as::<_, Participant>("SELECT id, name, status, joined_at, updated_at FROM participants WHERE room_id = ? ORDER BY joined_at ASC")
+        .bind(room_id)
+        .fetch_all(store)
+        .await
+        .map_err(db_error)
 }
 
 async fn add_participant(
-    store: &Store,
+    store: &SqlitePool,
     room: &PublicRoom,
     participant: Participant,
     learner_token: String,
 ) -> Result<(), ApiError> {
-    match store {
-        Store::Sqlite(db) => {
-            let inserted = sqlx::query("INSERT INTO participants (id, room_id, learner_token, name, status, joined_at, updated_at) SELECT ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM participants WHERE room_id = ?) < ?")
-                .bind(&participant.id).bind(&room.id).bind(learner_token).bind(&participant.name).bind(&participant.status).bind(participant.joined_at).bind(participant.updated_at).bind(&room.id).bind(room.capacity)
-                .execute(db).await.map_err(db_error)?;
-            if inserted.rows_affected() == 0 {
-                Err(api_error(
-                    "room_full",
-                    "This room is full. Ask the teacher to open another room.",
-                ))
-            } else {
-                Ok(())
-            }
-        }
-        Store::Blob(blob) => {
-            let lease = blob.acquire_room_lease(&room.id).await?;
-            let outcome = async {
-                if list_participants(store, &room.id).await?.len() as i64 >= room.capacity {
-                    return Err(api_error(
-                        "room_full",
-                        "This room is full. Ask the teacher to open another room.",
-                    ));
-                }
-                let stored = StoredParticipant {
-                    participant,
-                    learner_token,
-                };
-                if blob
-                    .put(
-                        &participant_blob_path(&room.id, &stored.participant.id),
-                        &stored,
-                        true,
-                    )
-                    .await?
-                {
-                    Ok(())
-                } else {
-                    Err(api_error(
-                        "server_error",
-                        "The room could not be updated. Try again.",
-                    ))
-                }
-            }
-            .await;
-            blob.release_room_lease(&room.id, &lease).await;
-            outcome
-        }
+    let inserted = sqlx::query("INSERT INTO participants (id, room_id, learner_token, name, status, joined_at, updated_at) SELECT ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM participants WHERE room_id = ?) < ?")
+        .bind(&participant.id).bind(&room.id).bind(learner_token).bind(&participant.name).bind(&participant.status).bind(participant.joined_at).bind(participant.updated_at).bind(&room.id).bind(room.capacity)
+        .execute(store).await.map_err(db_error)?;
+    if inserted.rows_affected() == 0 {
+        Err(api_error(
+            "room_full",
+            "This room is full. Ask the teacher to open another room.",
+        ))
+    } else {
+        Ok(())
     }
 }
 
 async fn update_participant(
-    store: &Store,
+    store: &SqlitePool,
     room_id: &str,
     learner_token: &str,
     status: &str,
     now: i64,
 ) -> Result<Participant, ApiError> {
-    match store {
-        Store::Sqlite(db) => {
-            // Progress is a one-way signal. In particular, a later preview run
-            // must not make a learner who has marked the exercise done look
-            // unfinished to their teacher.
-            let result = sqlx::query("UPDATE participants SET status = CASE WHEN status = 'done' THEN 'done' ELSE ? END, updated_at = ? WHERE room_id = ? AND learner_token = ?")
-                .bind(status).bind(now).bind(room_id).bind(learner_token).execute(db).await.map_err(db_error)?;
-            if result.rows_affected() == 0 {
-                return Err(api_error(
-                    "forbidden",
-                    "This learner link is no longer active. Join the room again.",
-                ));
-            }
-            sqlx::query_as::<_, Participant>("SELECT id, name, status, joined_at, updated_at FROM participants WHERE room_id = ? AND learner_token = ?")
-                .bind(room_id).bind(learner_token).fetch_one(db).await.map_err(db_error)
-        }
-        Store::Blob(blob) => {
-            let lease = blob.acquire_room_lease(room_id).await?;
-            let outcome = async {
-                for path in blob.list(&format!("rooms/{room_id}/participants/")).await? {
-                    if let Some(mut stored) = blob.get::<StoredParticipant>(&path).await? {
-                        if constant_time_eq(
-                            stored.learner_token.as_bytes(),
-                            learner_token.as_bytes(),
-                        ) {
-                            if stored.participant.status != "done" {
-                                stored.participant.status = status.to_string();
-                            }
-                            stored.participant.updated_at = now;
-                            blob.put(&path, &stored, false).await?;
-                            return Ok(stored.participant);
-                        }
-                    }
-                }
-                Err(api_error(
-                    "forbidden",
-                    "This learner link is no longer active. Join the room again.",
-                ))
-            }
-            .await;
-            blob.release_room_lease(room_id, &lease).await;
-            outcome
-        }
+    // Progress is a one-way signal. In particular, a later preview run
+    // must not make a learner who has marked the exercise done look unfinished.
+    let result = sqlx::query("UPDATE participants SET status = CASE WHEN status = 'done' THEN 'done' ELSE ? END, updated_at = ? WHERE room_id = ? AND learner_token = ?")
+        .bind(status).bind(now).bind(room_id).bind(learner_token).execute(store).await.map_err(db_error)?;
+    if result.rows_affected() == 0 {
+        return Err(api_error(
+            "forbidden",
+            "This learner link is no longer active. Join the room again.",
+        ));
     }
+    sqlx::query_as::<_, Participant>("SELECT id, name, status, joined_at, updated_at FROM participants WHERE room_id = ? AND learner_token = ?")
+        .bind(room_id).bind(learner_token).fetch_one(store).await.map_err(db_error)
 }
 
 async fn insert_room_sqlite(
@@ -1441,63 +924,28 @@ fn validate_room(input: &CreateRoom) -> Result<(), ApiError> {
     Ok(())
 }
 
-async fn purge_expired(store: &Store) {
-    match store {
-        Store::Sqlite(db) => {
-            if let Err(error) = sqlx::query("DELETE FROM participants WHERE room_id IN (SELECT id FROM rooms WHERE expires_at <= ?)")
-                .bind(unix_time()).execute(db).await { warn!(%error, "could not purge participants from expired rooms"); }
-            if let Err(error) = sqlx::query("DELETE FROM rooms WHERE expires_at <= ?")
-                .bind(unix_time())
-                .execute(db)
-                .await
-            {
-                warn!(%error, "could not purge expired rooms");
-            }
-        }
-        Store::Blob(blob) => {
-            let Ok(rooms) = blob.list("rooms/").await else {
-                warn!("could not list shared rooms for expiry cleanup");
-                return;
-            };
-            for path in rooms
-                .into_iter()
-                .filter(|path| path.ends_with(".json") && !path.contains("/participants/"))
-            {
-                match blob.get::<StoredRoom>(&path).await {
-                    Ok(Some(room)) if room.room.expires_at <= unix_time() => {
-                        let room_id = room.room.id;
-                        for participant_path in blob
-                            .list(&format!("rooms/{room_id}/participants/"))
-                            .await
-                            .unwrap_or_default()
-                        {
-                            if let Err(error) = blob.delete(&participant_path).await {
-                                warn!(%error.message, "could not purge participant");
-                            }
-                        }
-                        if let Err(error) = blob.delete(&path).await {
-                            warn!(%error.message, "could not purge room");
-                        }
-                    }
-                    Ok(_) => {}
-                    Err(error) => {
-                        warn!(%error.message, "could not read shared room during cleanup")
-                    }
-                }
-            }
-        }
+async fn purge_expired(store: &SqlitePool) {
+    if let Err(error) = sqlx::query(
+        "DELETE FROM participants WHERE room_id IN (SELECT id FROM rooms WHERE expires_at <= ?)",
+    )
+    .bind(unix_time())
+    .execute(store)
+    .await
+    {
+        warn!(%error, "could not purge participants from expired rooms");
+    }
+    if let Err(error) = sqlx::query("DELETE FROM rooms WHERE expires_at <= ?")
+        .bind(unix_time())
+        .execute(store)
+        .await
+    {
+        warn!(%error, "could not purge expired rooms");
     }
 }
 
 async fn purge_expired_demo(store: &DemoStore) {
-    if let DemoStore::Durable(demo_store) = store {
-        purge_expired(demo_store).await;
-        return;
-    }
     let now = unix_time();
-    let DemoStore::Memory(rooms) = store else {
-        unreachable!()
-    };
+    let DemoStore::Memory(rooms) = store;
     rooms
         .lock()
         .await
@@ -1707,5 +1155,50 @@ mod tests {
         .into_response();
         assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
         assert_eq!(response.headers().get(header::RETRY_AFTER).unwrap(), "1");
+    }
+
+    #[tokio::test]
+    async fn sqlite_mount_path_is_selected_and_persists_room_state() {
+        let root = std::env::temp_dir().join(format!(
+            "lesson-code-room-data-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let path = default_database_path(&root);
+        assert_eq!(path, root.join("lesson-code-room.db"));
+
+        let url = sqlite_url(&path);
+        let first = connect_sqlite(&url).await;
+        sqlx::query("INSERT INTO rooms (id, teacher_token, title, instructions, html, css, javascript, capacity, is_demo, created_at, expires_at) VALUES ('MOUNTP', 'token', 'Persistent room', 'Check the mounted database.', '<main></main>', '', '', 10, 0, 1, 9999999999)")
+            .execute(&first)
+            .await
+            .unwrap();
+        first.close().await;
+
+        let restarted = connect_sqlite(&url).await;
+        let title: String = sqlx::query_scalar("SELECT title FROM rooms WHERE id = 'MOUNTP'")
+            .fetch_one(&restarted)
+            .await
+            .unwrap();
+        assert_eq!(title, "Persistent room");
+        restarted.close().await;
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn sqlite_falls_back_to_a_local_path_only_when_the_data_mount_is_absent() {
+        let missing = std::env::temp_dir().join(format!(
+            "lesson-code-room-no-data-mount-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&missing);
+        assert_eq!(
+            default_database_path(&missing),
+            PathBuf::from("data/lesson-code-room.db")
+        );
     }
 }

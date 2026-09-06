@@ -29,7 +29,7 @@ npm run build
 PORT=8080 cargo run
 ```
 
-Open <http://localhost:8080>. Outside Azure, the server creates `data/lesson-code-room.db`. Supplying `DATABASE_URL` also selects SQLite, which is useful for isolated local tests.
+Open <http://localhost:8080>. The server uses SQLite at `/data/lesson-code-room.db` when the durable `/data` mount exists. Otherwise it creates `data/lesson-code-room.db` in the current directory. Supplying `DATABASE_URL` selects another SQLite file for isolated tests.
 
 For split frontend development:
 
@@ -64,7 +64,7 @@ docker run --rm -p 8080:8080 lesson-code-room
 curl http://localhost:8080/health
 ```
 
-The image runs as a non-root user, listens on `PORT` (default `8080`), and serves the built frontend from the same process. In the factory container, the service uses its managed identity for the shared room store. Teacher and learner requests can reach different replicas safely. Local development and explicit `DATABASE_URL` test runs use SQLite. No storage secret is baked into the image.
+The image runs as a non-root user, listens on `PORT` (default `8080`), and serves the built frontend from the same process. Factory deployment mounts durable product storage at `/data` and keeps one replica, so live rooms persist in SQLite across redeploys. Demo rooms stay only in process memory. Local development and explicit `DATABASE_URL` test runs use SQLite. No storage secret is baked into the image.
 
 ## Data and security
 

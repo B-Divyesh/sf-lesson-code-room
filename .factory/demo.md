@@ -19,7 +19,7 @@ The learner link on the page opens a real editable workbench for that temporary 
 
 ## Isolation and reset
 
-Demo rooms use `DEMO-` room IDs and a dedicated demo tenant. They never read or write the live SQLite or Azure Blob room store. Local and test demos use process memory. Deployed replicas use the separate `lesson-code-room-demo` Blob container so a learner can reach any replica. Demo data expires after two hours and cannot be resolved by the live-store path. The browser stores no demo identifier in local or session storage. Production live rooms use a different shared Azure Blob container through the service's managed identity; explicit local test URLs use SQLite.
+Demo rooms use `DEMO-` room IDs and a process-memory sample store. They never read or write the live SQLite database. Factory deployment keeps one replica, so a demo learner stays with the same in-memory sample while it is active. Demo data expires after two hours and also disappears when the process restarts. The browser stores no demo identifier in local or session storage. Live rooms use SQLite at `/data/lesson-code-room.db`; explicit local test URLs can select another SQLite file.
 
 **Reset demo** provisions a new random demo room. **Start for real** leaves the demo and opens the live room creator. The persistent banner identifies demo mode on every demo view.
 
